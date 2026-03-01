@@ -40,10 +40,46 @@ exports.register = async (req, res) => {
 
     // Send OTP email
     await sendEmail(
-      email,
-      "Your OTP Code - ZapTask",
-      `Your verification code is: ${otp}`
-    );
+  user.email,
+  "Verify Your Email - EarnMinute",
+  `
+  <div style="font-family: Arial, sans-serif; background:#f4f6f8; padding:40px 0;">
+    <div style="max-width:500px; margin:auto; background:white; padding:30px; border-radius:8px; box-shadow:0 5px 15px rgba(0,0,0,0.05);">
+
+      <h2 style="color:#111; text-align:center;">Welcome to EarnMinute</h2>
+
+      <p>Hello <strong>${user.name}</strong>,</p>
+
+      <p>Thank you for registering with <strong>EarnMinute</strong>.</p>
+
+      <p>Your verification code is:</p>
+
+      <div style="text-align:center; margin:20px 0;">
+        <span style="font-size:28px; letter-spacing:6px; font-weight:bold;">
+          ${otp}
+        </span>
+      </div>
+
+      <p style="color:#d9534f; font-weight:bold;">
+        ⚠️ Do not share this code with anyone.
+      </p>
+
+      <p>This code will expire in 10 minutes.</p>
+
+      <hr style="margin:25px 0;" />
+
+      <p style="font-size:13px; color:#777;">
+        If you did not request this verification, you can safely ignore this email.
+      </p>
+
+      <p style="font-size:13px; color:#777;">
+        © ${new Date().getFullYear()} EarnMinute. All rights reserved.
+      </p>
+
+    </div>
+  </div>
+  `
+);
 
     // Increment registration analytics
     await incrementRegistration();

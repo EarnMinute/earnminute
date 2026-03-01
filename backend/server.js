@@ -33,11 +33,17 @@ app.use("/api/v1/tasks", taskRoutes);
 app.use("/api/v1/applications", applicationRoutes);
 app.use("/api/v1/analytics", analyticsRoutes);
 
+const PORT = process.env.PORT || 5000;
+
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log("MongoDB Connected");
-    app.listen(process.env.PORT || 5000, () => {
-      console.log("Server running on port 5000");
+
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
     });
   })
-  .catch((err) => console.log(err));
+  .catch((err) => {
+    console.error("MongoDB connection error:", err);
+    process.exit(1);
+  });
