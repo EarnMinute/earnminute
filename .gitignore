@@ -1,0 +1,20 @@
+# Node
+node_modules/
+
+# Environment
+.env
+
+# MongoDB local data
+backend/mongodb-data/
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+dist/
+
+build/
