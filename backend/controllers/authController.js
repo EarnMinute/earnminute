@@ -20,9 +20,28 @@ exports.register = async (req, res) => {
 
     // Check if whatsapp already exists
     const existingUser = await User.findOne({ whatsapp });
-    if (existingUser) {
-      return res.status(400).json({ message: "WhatsApp already registered" });
-    }
+
+if (existingUser && existingUser.isVerified) {
+  return res.status(400).json({ message: "WhatsApp already registered" });
+}
+
+if (existingUser && !existingUser.isVerified) {
+  // regenerate OTP instead of blocking
+  existingUser.otp = Math.floor(100000 + Math.random() * 900000).toString();
+  existingUser.otpExpires = Date.now() + 10 * 60 * 1000;
+  await existingUser.save();
+
+  await sendEmail(
+    existingUser.email,
+    "Verify Your Email - EarnMinute",
+    `Your new OTP is: ${existingUser.otp}`
+  );
+
+  return res.status(200).json({
+    message: "New OTP sent to your email",
+    userId: existingUser._id,
+  });
+}
 
     // Generate 6 digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
