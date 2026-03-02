@@ -109,6 +109,7 @@ if (existingUser && !existingUser.isVerified) {
     });
 
   } catch (error) {
+    console.error("REGISTER ERROR:", error);  // 👈 ADD THIS LINE
     res.status(500).json({ message: error.message });
   }
 };
