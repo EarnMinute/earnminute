@@ -14,8 +14,22 @@ const applicationRoutes = require("./routes/applicationRoutes");
 const app = express();
 
 app.use(cors({
-  origin: "*"
+  origin: "https://earnminute.vercel.app",
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
 }));
+
+// VERY IMPORTANT — handle preflight
+app.options("*", cors());
+
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "https://earnminute.vercel.app");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  next();
+});
+
 app.use(express.json());
 app.use(async (req, res, next) => {
   if (req.method === "GET" && req.path === "/api/v1/analytics/public") {
