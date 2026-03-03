@@ -15,14 +15,12 @@ import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Tasks from "./pages/Tasks";
 import TaskDetails from "./pages/TaskDetails";
-import VerifyOtp from "./pages/VerifyOtp";
 
 function App() {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
 
-      {/* Page Content */}
       <div className="flex-grow">
         <Routes>
           <Route path="/" element={<Home />} />
@@ -61,7 +59,6 @@ function App() {
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/403" element={<Forbidden />} />
-          <Route path="/verify-otp" element={<VerifyOtp />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
