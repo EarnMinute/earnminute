@@ -13,103 +13,69 @@ const generateToken = (id) => {
   });
 };
 
-// 🔹 REGISTER (Send OTP, do NOT login yet)
+// 🔹 REGISTER (Email Only - Dev Mode)
 exports.register = async (req, res) => {
   try {
-    const { name, email, whatsapp, password, role } = req.body;
+    const { name, email, password, role } = req.body;
 
-    // Check if whatsapp already exists
-    const existingUser = await User.findOne({ whatsapp });
+    // Check if email already exists
+    const existingUser = await User.findOne({ email });
 
-if (existingUser && existingUser.isVerified) {
-  return res.status(400).json({ message: "WhatsApp already registered" });
-}
+    if (existingUser) {
+      // If verified user exists → block
+      if (existingUser.isVerified) {
+        return res.status(400).json({
+          message: "Email already registered",
+        });
+      }
 
-if (existingUser && !existingUser.isVerified) {
-  // regenerate OTP instead of blocking
-  existingUser.otp = Math.floor(100000 + Math.random() * 900000).toString();
-  existingUser.otpExpires = Date.now() + 10 * 60 * 1000;
-  await existingUser.save();
+      // If not verified → regenerate OTP
+      existingUser.otp = Math.floor(
+        100000 + Math.random() * 900000
+      ).toString();
+      existingUser.otpExpires = Date.now() + 10 * 60 * 1000;
 
-  await sendEmail(
-    existingUser.email,
-    "Verify Your Email - EarnMinute",
-    `Your new OTP is: ${existingUser.otp}`
-  );
+      await existingUser.save();
 
-  return res.status(200).json({
-    message: "New OTP sent to your email",
-    userId: existingUser._id,
-  });
-}
+      await sendEmail(
+        existingUser.email,
+        "Verify Your Email - EarnMinute",
+        `Your new OTP is: ${existingUser.otp}`
+      );
 
-    // Generate 6 digit OTP
+      return res.status(200).json({
+        message: "New OTP sent to your email",
+        userId: existingUser._id,
+      });
+    }
+
+    // Create new user
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
     const user = await User.create({
       name,
       email,
-      whatsapp,
       password,
       role,
       otp,
-      otpExpires: Date.now() + 10 * 60 * 1000, // 10 minutes
+      otpExpires: Date.now() + 10 * 60 * 1000,
       isVerified: false,
     });
 
-    // Send OTP email
     await sendEmail(
-  user.email,
-  "Verify Your Email - EarnMinute",
-  `
-  <div style="font-family: Arial, sans-serif; background:#f4f6f8; padding:40px 0;">
-    <div style="max-width:500px; margin:auto; background:white; padding:30px; border-radius:8px; box-shadow:0 5px 15px rgba(0,0,0,0.05);">
+      user.email,
+      "Verify Your Email - EarnMinute",
+      `Your OTP is: ${otp}`
+    );
 
-      <h2 style="color:#111; text-align:center;">Welcome to EarnMinute</h2>
-
-      <p>Hello <strong>${user.name}</strong>,</p>
-
-      <p>Thank you for registering with <strong>EarnMinute</strong>.</p>
-
-      <p>Your verification code is:</p>
-
-      <div style="text-align:center; margin:20px 0;">
-        <span style="font-size:28px; letter-spacing:6px; font-weight:bold;">
-          ${otp}
-        </span>
-      </div>
-
-      <p style="color:#d9534f; font-weight:bold;">
-        ⚠️ Do not share this code with anyone.
-      </p>
-
-      <p>This code will expire in 10 minutes.</p>
-
-      <hr style="margin:25px 0;" />
-
-      <p style="font-size:13px; color:#777;">
-        If you did not request this verification, you can safely ignore this email.
-      </p>
-
-      <p style="font-size:13px; color:#777;">
-        © ${new Date().getFullYear()} EarnMinute. All rights reserved.
-      </p>
-
-    </div>
-  </div>
-  `
-);
-
-    // Increment registration analytics
     await incrementRegistration();
 
     res.status(200).json({
       message: "OTP sent to your email",
       userId: user._id,
     });
-
   } catch (error) {
-    console.error("REGISTER ERROR:", error);  // 👈 ADD THIS LINE
+    console.error("REGISTER ERROR:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -141,31 +107,28 @@ exports.verifyOtp = async (req, res) => {
       token: generateToken(user._id),
       user,
     });
-
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// 🔹 LOGIN
+// 🔹 LOGIN (Email Only)
 exports.login = async (req, res) => {
   try {
-    const { whatsapp, password } = req.body;
+    const { email, password } = req.body;
 
-    const user = await User.findOne({ whatsapp });
+    const user = await User.findOne({ email });
 
     if (!user || !(await user.matchPassword(password))) {
       return res.status(401).json({ message: "Login failed" });
     }
 
-    // 🚨 Block login if not verified
     if (!user.isVerified) {
       return res.status(401).json({
         message: "Please verify your email before login",
       });
     }
 
-    // Increment login analytics
     await incrementLogin();
 
     res.status(200).json({
@@ -173,7 +136,6 @@ exports.login = async (req, res) => {
       token: generateToken(user._id),
       user,
     });
-
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

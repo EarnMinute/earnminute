@@ -8,7 +8,7 @@ function Login() {
   const { login } = useAuth();
 
   const [form, setForm] = useState({
-    whatsapp: "",
+    email: "",
     password: "",
   });
 
@@ -47,9 +47,9 @@ function Login() {
       >
         <input
           type="text"
-          name="whatsapp"
-          placeholder="WhatsApp Number"
-          value={form.whatsapp}
+          name="email"
+          placeholder="Email Address"
+          value={form.email}
           onChange={handleChange}
           className="w-full border p-3 rounded"
           required

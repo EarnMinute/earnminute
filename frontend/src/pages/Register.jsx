@@ -8,7 +8,6 @@ function Register() {
   const [form, setForm] = useState({
     name: "",
     email: "",
-    whatsapp: "",
     password: "",
     role: "freelancer",
   });
@@ -59,16 +58,6 @@ function Register() {
           name="email"
           placeholder="Email Address"
           value={form.email}
-          onChange={handleChange}
-          className="w-full border p-3 rounded"
-          required
-        />
-
-        <input
-          type="text"
-          name="whatsapp"
-          placeholder="WhatsApp Number"
-          value={form.whatsapp}
           onChange={handleChange}
           className="w-full border p-3 rounded"
           required
