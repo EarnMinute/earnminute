@@ -14,6 +14,9 @@ function EmployerDashboard() {
   const [applications, setApplications] = useState([]);
   const [ratingTaskId, setRatingTaskId] = useState(null);
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+
   useEffect(() => {
     fetchDashboard();
   }, []);
@@ -64,10 +67,7 @@ function EmployerDashboard() {
 
     try {
       await API.patch(`/tasks/${taskId}/complete`);
-
-      // IMPORTANT LINE
       setRatingTaskId(taskId);
-
       fetchDashboard();
     } catch (error) {
       console.error("Complete error:", error);
@@ -79,151 +79,228 @@ function EmployerDashboard() {
     dashboard.assigned.length +
     dashboard.completed.length;
 
+  const menuItems = [
+    { key: "open", label: "Open", icon: "📂" },
+    { key: "assigned", label: "Assigned", icon: "👤" },
+    { key: "completed", label: "Completed", icon: "✅" },
+  ];
+
   return (
-    <div className="max-w-6xl mx-auto px-6 py-10">
-      {/* HEADER */}
-      <h1 className="text-3xl font-bold text-blue-900 mb-6">My Tasks</h1>
-
-      {/* SUMMARY CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-        <div className="bg-white p-6 rounded-xl shadow text-center">
-          <p className="text-gray-500 text-sm">Total Tasks</p>
-          <p className="text-2xl font-bold">{totalTasks}</p>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow text-center">
-          <p className="text-gray-500 text-sm">Open</p>
-          <p className="text-2xl font-bold text-green-600">
-            {dashboard.open.length}
-          </p>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow text-center">
-          <p className="text-gray-500 text-sm">Completed</p>
-          <p className="text-2xl font-bold text-blue-600">
-            {dashboard.completed.length}
-          </p>
-        </div>
-      </div>
-
-      {/* TABS */}
-      <div className="flex gap-6 border-b mb-8">
-        {["open", "assigned", "completed"].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`pb-2 capitalize ${
-              activeTab === tab
-                ? "border-b-2 border-blue-800 text-blue-800 font-semibold"
-                : "text-gray-500"
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
-
-      {/* OPEN TASKS */}
-      {activeTab === "open" &&
-        dashboard.open.map((task) => (
-          <div key={task._id} className="bg-white rounded-xl shadow mb-6">
-            <div
-              onClick={() => toggleTask(task._id)}
-              className="p-6 flex justify-between cursor-pointer"
-            >
-              <div>
-                <h3 className="font-semibold text-lg">{task.title}</h3>
-                <p className="text-green-600 font-semibold">
-                  ৳ {task.budgetAmount}
-                </p>
-              </div>
-
-              <div className="text-blue-700 font-semibold">
-                {task.applicationsCount} Applications
-              </div>
-            </div>
-
-            {expandedTask === task._id && (
-              <div className="border-t p-4 bg-gray-50 space-y-3">
-                {applications.length === 0 ? (
-                  <p className="text-sm text-gray-500">No applications yet.</p>
-                ) : (
-                  applications.map((app) => (
-                    <div
-                      key={app._id}
-                      className="bg-white p-4 rounded flex justify-between items-center shadow-sm"
-                    >
-                      <div>
-                        <p className="font-semibold">{app.freelancer.name}</p>
-                        <p className="text-sm text-gray-600">
-                          Rating: {app.freelancer.ratingAverage || 0}
-                        </p>
-                      </div>
-
-                      <button
-                        onClick={() => handleAssign(task._id, app._id)}
-                        className="bg-green-600 text-white px-4 py-2 rounded"
-                      >
-                        Assign
-                      </button>
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-          </div>
-        ))}
-
-      {/* ASSIGNED TASKS */}
-      {activeTab === "assigned" &&
-        dashboard.assigned.map((task) => (
-          <div
-            key={task._id}
-            className="bg-white p-6 rounded-xl shadow mb-6 flex justify-between items-center"
-          >
-            <div>
-              <h3 className="font-semibold text-lg">{task.title}</h3>
-              <p className="text-green-600 font-semibold">
-                ৳ {task.budgetAmount}
-              </p>
-              <p className="text-sm text-gray-600">
-                Assigned to: {task.assignedFreelancer?.name}
-              </p>
-            </div>
-
-            <button
-              onClick={() => handleComplete(task._id)}
-              className="bg-blue-800 text-white px-5 py-2 rounded"
-            >
-              Mark as Completed
-            </button>
-          </div>
-        ))}
-
-      {/* COMPLETED TASKS */}
-      {activeTab === "completed" &&
-        dashboard.completed.map((task) => (
-          <div key={task._id} className="bg-white p-6 rounded-xl shadow mb-6">
-            <h3 className="font-semibold text-lg">{task.title}</h3>
-            <p className="text-green-600 font-semibold">
-              ৳ {task.budgetAmount}
-            </p>
-            <p className="text-sm text-gray-600">
-              Completed by: {task.assignedFreelancer?.name}
-            </p>
-
-            <span className="inline-block mt-2 px-3 py-1 text-xs bg-green-100 text-green-800 rounded-full">
-              Completed ✔
-            </span>
-          </div>
-        ))}
-      {ratingTaskId && (
-        <RatingModal
-          taskId={ratingTaskId}
-          onClose={() => setRatingTaskId(null)}
-          onSuccess={fetchDashboard}
+    <div className="bg-gray-50 min-h-screen flex relative">
+      {/* MOBILE OVERLAY */}
+      {sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 bg-black bg-opacity-40 z-40 md:hidden"
         />
       )}
+
+      {/* SIDEBAR */}
+      <div
+        className={`
+          fixed md:static z-50 top-0 left-0 h-full bg-white border-r shadow-sm
+          transform transition-transform duration-300
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+          md:translate-x-0
+          ${collapsed ? "w-20" : "w-64"}
+        `}
+      >
+        <div className="p-6 flex justify-between items-center">
+          {!collapsed && (
+            <h2 className="text-lg font-semibold text-blue-900">Employer</h2>
+          )}
+
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className="hidden md:block text-gray-500 hover:text-blue-900"
+          >
+            {collapsed ? "➡️" : "⬅️"}
+          </button>
+
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="md:hidden text-gray-500"
+          >
+            ✕
+          </button>
+        </div>
+
+        <nav className="space-y-2 px-3">
+          {menuItems.map((item) => (
+            <button
+              key={item.key}
+              onClick={() => {
+                setActiveTab(item.key);
+                setSidebarOpen(false);
+              }}
+              className={`flex items-center gap-3 w-full px-4 py-2 rounded-lg transition ${
+                activeTab === item.key
+                  ? "bg-blue-900 text-white"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
+            >
+              <span className="text-lg">{item.icon}</span>
+              {!collapsed && <span>{item.label}</span>}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {/* MAIN CONTENT */}
+      <div className="flex-1 p-6 md:p-10 ml-0 md:ml-0">
+        {/* MOBILE HEADER */}
+        <div className="md:hidden mb-6 flex justify-between items-center">
+          <button onClick={() => setSidebarOpen(true)} className="text-2xl">
+            ☰
+          </button>
+          <h1 className="text-lg font-semibold">Dashboard</h1>
+        </div>
+
+        <div className="max-w-6xl mx-auto">
+          {/* HEADER */}
+          <div className="mb-10 hidden md:block">
+            <h1>Employer Dashboard</h1>
+            <p className="text-gray-500 mt-2">
+              Manage your tasks and applications efficiently.
+            </p>
+          </div>
+
+          {/* SUMMARY CARDS */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <div className="bg-white rounded-xl shadow-md p-6">
+              <p className="text-sm text-gray-500">Total Tasks</p>
+              <p className="text-3xl font-bold text-blue-900 mt-2">
+                {totalTasks}
+              </p>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-md p-6">
+              <p className="text-sm text-gray-500">Open</p>
+              <p className="text-3xl font-bold text-green-600 mt-2">
+                {dashboard.open.length}
+              </p>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-md p-6">
+              <p className="text-sm text-gray-500">Completed</p>
+              <p className="text-3xl font-bold text-orange-500 mt-2">
+                {dashboard.completed.length}
+              </p>
+            </div>
+          </div>
+
+          {/* TASK CONTENT */}
+          {activeTab === "open" &&
+            dashboard.open.map((task) => (
+              <div
+                key={task._id}
+                className="bg-white rounded-xl shadow-md mb-6 overflow-hidden"
+              >
+                <div
+                  onClick={() => toggleTask(task._id)}
+                  className="p-6 flex justify-between items-center cursor-pointer hover:bg-gray-50 transition"
+                >
+                  <div>
+                    <h3>{task.title}</h3>
+                    <p className="text-green-600 font-semibold mt-1">
+                      ৳ {task.budgetAmount}
+                    </p>
+                  </div>
+
+                  <span className="px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full">
+                    {task.applicationsCount} Applications
+                  </span>
+                </div>
+
+                {expandedTask === task._id && (
+                  <div className="border-t bg-gray-50 p-6 space-y-4">
+                    {applications.length === 0 ? (
+                      <p className="text-sm text-gray-500">
+                        No applications yet.
+                      </p>
+                    ) : (
+                      applications.map((app) => (
+                        <div
+                          key={app._id}
+                          className="bg-white p-5 rounded-xl shadow-sm flex justify-between items-center"
+                        >
+                          <div>
+                            <p className="font-semibold">
+                              {app.freelancer.name}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              Rating: {app.freelancer.ratingAverage || 0}
+                            </p>
+                          </div>
+
+                          <button
+                            onClick={() => handleAssign(task._id, app._id)}
+                            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
+                          >
+                            Assign
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+
+          {activeTab === "assigned" &&
+            dashboard.assigned.map((task) => (
+              <div
+                key={task._id}
+                className="bg-white rounded-xl shadow-md p-6 mb-6 flex justify-between items-center"
+              >
+                <div>
+                  <h3>{task.title}</h3>
+                  <p className="text-green-600 font-semibold mt-1">
+                    ৳ {task.budgetAmount}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Assigned to: {task.assignedFreelancer?.name}
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => handleComplete(task._id)}
+                  className="bg-blue-900 text-white px-5 py-2 rounded-lg hover:bg-blue-800 transition"
+                >
+                  Mark as Completed
+                </button>
+              </div>
+            ))}
+
+          {activeTab === "completed" &&
+            dashboard.completed.map((task) => (
+              <div
+                key={task._id}
+                className="bg-white rounded-xl shadow-md p-6 mb-6"
+              >
+                <h3>{task.title}</h3>
+                <p className="text-green-600 font-semibold mt-1">
+                  ৳ {task.budgetAmount}
+                </p>
+                <p className="text-sm text-gray-500 mt-2">
+                  Completed by: {task.assignedFreelancer?.name}
+                </p>
+
+                <span className="inline-block mt-3 px-3 py-1 text-xs bg-green-100 text-green-800 rounded-full">
+                  Completed ✔
+                </span>
+              </div>
+            ))}
+
+          {ratingTaskId && (
+            <RatingModal
+              taskId={ratingTaskId}
+              onClose={() => setRatingTaskId(null)}
+              onSuccess={fetchDashboard}
+            />
+          )}
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,6 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import logo from "../assets/logo.png";
 
 function Navbar() {
   const { user, logout } = useAuth();
@@ -12,69 +11,75 @@ function Navbar() {
   };
 
   return (
-    <nav className="bg-white border-b border-gray-200">
-      <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-        {/* Logo + Brand */}
-        <Link to="/" className="flex items-center space-x-3">
-          <img
-            src={logo}
-            alt="EarnMinute"
-            className="h-8 w-auto object-contain"
-          />
-          <span className="text-lg font-semibold text-gray-900 tracking-wide">
-            EarnMinute
-          </span>
-        </Link>
-
-        {/* Navigation Links */}
-        <div className="flex items-center space-x-6 text-sm font-medium text-gray-600">
-          <Link to="/" className="hover:text-black transition">
-            Home
+    <nav className="bg-white border-b shadow-sm">
+      <div className="max-w-6xl mx-auto px-6">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo */}
+          <Link to="/" className="text-2xl font-bold text-blue-900">
+            Earn<span className="text-orange-500">Minute</span>
           </Link>
 
-          {user?.user?.role === "employer" && (
-            <>
+          {/* Desktop Nav */}
+          <div className="hidden md:flex items-center gap-8">
+            <Link
+              to="/tasks"
+              className="text-gray-600 hover:text-blue-900 font-medium transition"
+            >
+              Browse Tasks
+            </Link>
+
+            {user && user.role === "employer" && (
               <Link
-                to="/employer/dashboard"
-                className="hover:text-black transition"
+                to="/post-task"
+                className="text-gray-600 hover:text-blue-900 font-medium transition"
               >
-                Dashboard
-              </Link>
-              <Link to="/post-task" className="hover:text-black transition">
                 Post Task
               </Link>
-            </>
-          )}
+            )}
 
-          {user?.user?.role === "freelancer" && (
-            <Link
-              to="/freelancer/dashboard"
-              className="hover:text-black transition"
-            >
-              Dashboard
-            </Link>
-          )}
+            {user ? (
+              <>
+                <Link
+                  to="/dashboard"
+                  className="text-gray-600 hover:text-blue-900 font-medium transition"
+                >
+                  Dashboard
+                </Link>
 
-          {!user ? (
-            <>
-              <Link to="/login" className="hover:text-black transition">
-                Login
-              </Link>
-              <Link
-                to="/register"
-                className="bg-black text-white px-4 py-2 rounded-lg hover:opacity-90 transition"
-              >
-                Get Started
-              </Link>
-            </>
-          ) : (
-            <button
-              onClick={handleLogout}
-              className="text-red-600 hover:text-red-700 font-semibold transition"
-            >
-              Logout
-            </button>
-          )}
+                <div className="flex items-center gap-3">
+                  <span className="bg-blue-100 text-blue-900 px-3 py-1 rounded-full text-sm font-medium">
+                    {user.name}
+                  </span>
+
+                  <button
+                    onClick={handleLogout}
+                    className="text-sm text-red-500 hover:text-red-600 transition"
+                  >
+                    Logout
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="text-gray-600 hover:text-blue-900 font-medium transition"
+                >
+                  Login
+                </Link>
+
+                <Link
+                  to="/register"
+                  className="bg-orange-500 text-white px-5 py-2 rounded-lg font-medium hover:bg-orange-600 transition shadow"
+                >
+                  Get Started
+                </Link>
+              </>
+            )}
+          </div>
+
+          {/* Mobile Placeholder */}
+          <div className="md:hidden text-gray-700 text-xl">☰</div>
         </div>
       </div>
     </nav>

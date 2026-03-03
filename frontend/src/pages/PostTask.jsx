@@ -50,105 +50,154 @@ function PostTask() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto py-12 px-6">
-      <div className="bg-white p-8 rounded-xl shadow">
-        <h1 className="text-2xl font-bold text-blue-900 mb-8">
-          Post a New Task
-        </h1>
+    <div className="bg-gray-50 min-h-screen py-16 px-6">
+      <div className="max-w-4xl mx-auto">
+        {/* HEADER */}
+        <div className="mb-10">
+          <h1>Post a New Task</h1>
+          <p className="text-gray-500 mt-2">
+            Provide clear details to attract the right freelancers.
+          </p>
+        </div>
 
-        {error && <p className="mb-6 text-red-600 font-semibold">{error}</p>}
+        {/* FORM CARD */}
+        <div className="bg-white rounded-xl shadow-md p-10">
+          {error && (
+            <div className="mb-6 bg-red-50 border border-red-200 text-red-600 p-4 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* TITLE */}
-          <div>
-            <label className="block mb-2 font-semibold">Task Title *</label>
-            <input
-              type="text"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              className="w-full border rounded p-3"
-              placeholder="Enter task title"
-            />
-          </div>
-
-          {/* DESCRIPTION */}
-          <div>
-            <label className="block mb-2 font-semibold">Description *</label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              rows="4"
-              className="w-full border rounded p-3"
-              placeholder="Describe your task"
-            />
-          </div>
-
-          {/* SKILLS */}
-          <div>
-            <label className="block mb-2 font-semibold">Required Skills</label>
-            <input
-              type="text"
-              name="skills"
-              value={formData.skills}
-              onChange={handleChange}
-              className="w-full border rounded p-3"
-              placeholder="Excel, Data Entry, Typing"
-            />
-          </div>
-
-          {/* BUDGET */}
-          <div className="grid md:grid-cols-2 gap-6">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {/* TASK DETAILS SECTION */}
             <div>
-              <label className="block mb-2 font-semibold">Budget Type</label>
-              <select
-                name="budgetType"
-                value={formData.budgetType}
-                onChange={handleChange}
-                className="w-full border rounded p-3"
+              <h2 className="text-lg font-semibold text-blue-900 mb-6">
+                Task Details
+              </h2>
+
+              <div className="space-y-6">
+                {/* TITLE */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">
+                    Task Title *
+                  </label>
+                  <input
+                    type="text"
+                    name="title"
+                    value={formData.title}
+                    onChange={handleChange}
+                    placeholder="Enter task title"
+                    className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-900 focus:outline-none transition"
+                  />
+                </div>
+
+                {/* DESCRIPTION */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">
+                    Description *
+                  </label>
+                  <textarea
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    rows="5"
+                    placeholder="Describe your task clearly..."
+                    className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-900 focus:outline-none transition"
+                  />
+                </div>
+
+                {/* SKILLS */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">
+                    Required Skills
+                  </label>
+                  <input
+                    type="text"
+                    name="skills"
+                    value={formData.skills}
+                    onChange={handleChange}
+                    placeholder="Excel, Data Entry, Typing"
+                    className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-900 focus:outline-none transition"
+                  />
+                  <p className="text-xs text-gray-400 mt-2">
+                    Separate skills with commas.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* BUDGET SECTION */}
+            <div>
+              <h2 className="text-lg font-semibold text-blue-900 mb-6">
+                Budget Information
+              </h2>
+
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* BUDGET TYPE */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">
+                    Budget Type
+                  </label>
+                  <select
+                    name="budgetType"
+                    value={formData.budgetType}
+                    onChange={handleChange}
+                    className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-900 focus:outline-none transition bg-white"
+                  >
+                    <option value="fixed">Fixed</option>
+                    <option value="hourly">Hourly</option>
+                  </select>
+                </div>
+
+                {/* BUDGET AMOUNT */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">
+                    Budget Amount (৳) *
+                  </label>
+                  <input
+                    type="number"
+                    name="budgetAmount"
+                    value={formData.budgetAmount}
+                    onChange={handleChange}
+                    placeholder="Enter amount"
+                    className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-900 focus:outline-none transition"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* DEADLINE */}
+            <div>
+              <h2 className="text-lg font-semibold text-blue-900 mb-6">
+                Timeline
+              </h2>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-2">
+                  Deadline
+                </label>
+                <input
+                  type="date"
+                  name="deadline"
+                  value={formData.deadline}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-900 focus:outline-none transition"
+                />
+              </div>
+            </div>
+
+            {/* SUBMIT BUTTON */}
+            <div className="pt-6 border-t flex justify-end">
+              <button
+                type="submit"
+                disabled={loading}
+                className="bg-orange-500 text-white px-8 py-3 rounded-lg font-medium hover:bg-orange-600 transition shadow-md disabled:opacity-60"
               >
-                <option value="fixed">Fixed</option>
-                <option value="hourly">Hourly</option>
-              </select>
+                {loading ? "Posting Task..." : "Post Task"}
+              </button>
             </div>
-
-            <div>
-              <label className="block mb-2 font-semibold">
-                Budget Amount (৳) *
-              </label>
-              <input
-                type="number"
-                name="budgetAmount"
-                value={formData.budgetAmount}
-                onChange={handleChange}
-                className="w-full border rounded p-3"
-                placeholder="Enter amount"
-              />
-            </div>
-          </div>
-
-          {/* DEADLINE */}
-          <div>
-            <label className="block mb-2 font-semibold">Deadline</label>
-            <input
-              type="date"
-              name="deadline"
-              value={formData.deadline}
-              onChange={handleChange}
-              className="w-full border rounded p-3"
-            />
-          </div>
-
-          {/* SUBMIT */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-orange-500 text-white px-6 py-3 rounded hover:bg-orange-600 transition"
-          >
-            {loading ? "Posting..." : "Post Task"}
-          </button>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   );
