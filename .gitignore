@@ -26,3 +26,5 @@ WiredTiger*
 
 diagnostic.data/
 _tmp/
+
+.env.local
