@@ -1,10 +1,16 @@
-const { Resend } = require("resend");
+const nodemailer = require("nodemailer");
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS, // App Password
+  },
+});
 
 const sendEmail = async (to, subject, html) => {
-  await resend.emails.send({
-    from: process.env.EMAIL_FROM,
+  await transporter.sendMail({
+    from: `"EarnMinute" <${process.env.EMAIL_USER}>`,
     to,
     subject,
     html,
