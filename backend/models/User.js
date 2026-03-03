@@ -26,20 +26,32 @@ const userSchema = new mongoose.Schema(
       enum: ["freelancer", "employer"],
       required: true,
     },
+
+    rating: {
+      total: {
+        type: Number,
+        default: 0,
+      },
+      count: {
+        type: Number,
+        default: 0,
+      },
+      average: {
+        type: Number,
+        default: 0,
+      },
+    },
   },
   { timestamps: true }
 );
 
-// 🔐 Hash password
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
-
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
   next();
 });
 
-// 🔐 Compare password
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };

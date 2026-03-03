@@ -137,12 +137,12 @@ function FreelancerDashboard() {
 
           {/* Star Rating */}
           <div className="text-yellow-500 mt-2">
-            {"★".repeat(Math.round(freelancer?.ratingAverage || 0))}
-            {"☆".repeat(5 - Math.round(freelancer?.ratingAverage || 0))}
+            {"★".repeat(Math.round(freelancer?.rating?.average || 0))}
+            {"☆".repeat(5 - Math.round(freelancer?.rating?.average || 0))}
           </div>
 
           <p className="text-sm text-gray-500 mt-2">
-            ({freelancer?.ratingCount || 0} reviews)
+            ({freelancer?.rating?.count || 0} reviews)
           </p>
 
           <div className="mt-4 border-t pt-4">

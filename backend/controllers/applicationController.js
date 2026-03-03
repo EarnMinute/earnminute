@@ -2,51 +2,86 @@ const Application = require("../models/Application");
 const Task = require("../models/Task");
 const User = require("../models/User");
 
+/* ===============================
+   APPLY TO TASK
+================================= */
 exports.applyToTask = async (req, res) => {
   try {
-    const task = await Task.findById(req.params.taskId);
+    const taskId = req.params.taskId;
+    const freelancerId = req.user._id;
+
+    const task = await Task.findById(taskId);
+
     if (!task || task.status !== "open") {
       return res.status(400).json({ message: "Task not available" });
     }
 
-    const application = await Application.create({
-      task: task._id,
-      freelancer: req.user._id,
+    // 🔐 Prevent duplicate application
+    const existingApplication = await Application.findOne({
+      task: taskId,
+      freelancer: freelancerId,
     });
- 
 
-    task.applicationsCount += 1;
+    if (existingApplication) {
+      return res.status(400).json({
+        message: "You have already applied to this task",
+      });
+    }
+
+    const application = await Application.create({
+      task: taskId,
+      freelancer: freelancerId,
+      status: "applied",
+    });
+
+    task.applicationsCount = (task.applicationsCount || 0) + 1;
     await task.save();
 
-    res.status(201).json({ message: "Applied successfully", application });
+    res.status(201).json({
+      message: "Applied successfully",
+      application,
+    });
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
+/* ===============================
+   GET APPLICATIONS FOR TASK
+================================= */
 exports.getApplicationsForTask = async (req, res) => {
   try {
     const applications = await Application.find({
       task: req.params.taskId,
       status: "applied",
-    }).populate("freelancer", "name ratingAverage whatsapp");
+    }).populate("freelancer", "name rating");
 
     res.status(200).json({ applications });
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
+/* ===============================
+   ASSIGN FREELANCER
+================================= */
 exports.assignFreelancer = async (req, res) => {
   try {
     const { taskId, applicationId } = req.params;
 
     const task = await Task.findById(taskId);
+
     if (!task || task.status !== "open") {
       return res.status(400).json({ message: "Task already assigned" });
     }
 
     const selectedApplication = await Application.findById(applicationId);
+
+    if (!selectedApplication) {
+      return res.status(404).json({ message: "Application not found" });
+    }
 
     task.status = "assigned";
     task.assignedFreelancer = selectedApplication.freelancer;
@@ -55,27 +90,34 @@ exports.assignFreelancer = async (req, res) => {
     selectedApplication.status = "assigned";
     await selectedApplication.save();
 
+    // Reject all others
     await Application.updateMany(
       { task: taskId, _id: { $ne: applicationId } },
       { status: "rejected" }
     );
 
-    res.status(200).json({ message: "Freelancer assigned successfully" });
+    res.status(200).json({
+      message: "Freelancer assigned successfully",
+    });
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
+/* ===============================
+   FREELANCER DASHBOARD
+================================= */
 exports.getFreelancerDashboard = async (req, res) => {
   try {
     const freelancerId = req.user._id;
 
-    // Get freelancer info
-    const freelancer = await User.findById(freelancerId);
+    const freelancer = await User.findById(freelancerId).select(
+      "name email rating"
+    );
 
     const applications = await Application.find({
       freelancer: freelancerId,
-      isDeleted: { $ne: true },
     })
       .populate({
         path: "task",
@@ -92,13 +134,12 @@ exports.getFreelancerDashboard = async (req, res) => {
     const rejected = [];
 
     applications.forEach((app) => {
-      // 🔥 Skip if task no longer exists
       if (!app.task) return;
 
       if (app.status === "rejected") {
         rejected.push(app);
       } 
-      else if (app.status === "assigned" && app.task?.status === "completed") {
+      else if (app.status === "assigned" && app.task.status === "completed") {
         completed.push(app);
       }
       else if (app.status === "assigned") {
@@ -110,11 +151,7 @@ exports.getFreelancerDashboard = async (req, res) => {
     });
 
     res.status(200).json({
-      freelancer: {
-        name: freelancer?.name || "",
-        ratingAverage: freelancer?.ratingAverage || 0,
-        ratingCount: freelancer?.ratingCount || 0,
-      },
+      freelancer,
       applied,
       assigned,
       completed,

@@ -1,9 +1,12 @@
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
+
 const {
   incrementRegistration,
   incrementLogin,
 } = require("./analyticsController");
+
+const { validationResult } = require("express-validator");
 
 // 🔐 Generate JWT
 const generateToken = (id) => {
@@ -15,6 +18,11 @@ const generateToken = (id) => {
 // 🔹 REGISTER
 exports.register = async (req, res) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
     const { name, email, password, role } = req.body;
 
     const existingUser = await User.findOne({ email });
@@ -32,15 +40,13 @@ exports.register = async (req, res) => {
       role,
     });
 
-    await incrementRegistration();
-
     res.status(201).json({
       message: "Registration successful",
       token: generateToken(user._id),
       user,
     });
+
   } catch (error) {
-    console.error("REGISTER ERROR:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -48,6 +54,11 @@ exports.register = async (req, res) => {
 // 🔹 LOGIN
 exports.login = async (req, res) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
@@ -56,13 +67,12 @@ exports.login = async (req, res) => {
       return res.status(401).json({ message: "Login failed" });
     }
 
-    await incrementLogin();
-
     res.status(200).json({
       message: "Login successful",
       token: generateToken(user._id),
       user,
     });
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

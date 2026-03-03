@@ -50,7 +50,7 @@ exports.getEmployerDashboard = async (req, res) => {
       employer: employerId,
       isDeleted: { $ne: true },
     })
-      .populate("assignedFreelancer", "name ratingAverage")
+      .populate("assignedFreelancer", "name rating")
       .sort({ createdAt: -1 });
 
     const open = [];
@@ -139,17 +139,11 @@ exports.rateFreelancer = async (req, res) => {
         message: "Freelancer not found",
       });
 
-    // Initialize if undefined
-    freelancer.ratingCount = freelancer.ratingCount || 0;
-    freelancer.ratingAverage = freelancer.ratingAverage || 0;
-
-    const totalRating =
-      freelancer.ratingAverage * freelancer.ratingCount +
-      rating;
-
-    freelancer.ratingCount += 1;
-    freelancer.ratingAverage =
-      totalRating / freelancer.ratingCount;
+    // 🔥 Update structured rating
+    freelancer.rating.total += rating;
+    freelancer.rating.count += 1;
+    freelancer.rating.average =
+      freelancer.rating.total / freelancer.rating.count;
 
     await freelancer.save();
 
@@ -163,6 +157,7 @@ exports.rateFreelancer = async (req, res) => {
     res.status(200).json({
       message: "Rating submitted successfully",
     });
+
   } catch (error) {
     res.status(500).json({
       message: "Server Error",

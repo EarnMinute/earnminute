@@ -10,4 +10,6 @@ const applicationSchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
+applicationSchema.index({ task: 1, freelancer: 1 }, { unique: true });
+
 module.exports = mongoose.model("Application", applicationSchema);
