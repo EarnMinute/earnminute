@@ -25,11 +25,8 @@ function Register() {
     try {
       const res = await API.post("/auth/register", form);
 
-      // Store temporary userId for OTP verification
-      localStorage.setItem("otpUserId", res.data.userId);
-
-      // Redirect to OTP page
-      navigate("/verify-otp");
+      localStorage.setItem("userInfo", JSON.stringify(res.data));
+      navigate("/");
     } catch (err) {
       setError(err.response?.data?.message || "Registration failed");
     }

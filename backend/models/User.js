@@ -11,6 +11,7 @@ const userSchema = new mongoose.Schema(
     email: {
       type: String,
       required: true,
+      unique: true,
       lowercase: true,
       trim: true,
     },
@@ -22,27 +23,14 @@ const userSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ["employer", "freelancer"],
+      enum: ["freelancer", "employer"],
       required: true,
-    },
-
-    isVerified: {
-      type: Boolean,
-      default: false,
-    },
-
-    otp: {
-      type: String,
-    },
-
-    otpExpires: {
-      type: Date,
     },
   },
   { timestamps: true }
 );
 
-// 🔐 Hash password before save
+// 🔐 Hash password
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
 
