@@ -15,6 +15,7 @@ import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Tasks from "./pages/Tasks";
 import TaskDetails from "./pages/TaskDetails";
+import FreelancerProfile from "./pages/FreelancerProfile";
 
 function App() {
   return (
@@ -53,7 +54,10 @@ function App() {
               </ProtectedRoute>
             }
           />
-
+          <Route
+            path="/freelancer/profile/:id"
+            element={<FreelancerProfile />}
+          />
           <Route path="/tasks" element={<Tasks />} />
           <Route path="/task/:id" element={<TaskDetails />} />
           <Route path="/terms" element={<Terms />} />

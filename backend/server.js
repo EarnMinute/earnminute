@@ -7,6 +7,7 @@ const rateLimit = require("express-rate-limit");
 const mongoSanitize = require("express-mongo-sanitize");
 const { applicationLimiter } = require("./middleware/abuseLimiter");
 const morgan = require("morgan");
+const userRoutes = require("./routes/userRoutes");
 
 dotenv.config();
 
@@ -115,6 +116,7 @@ app.use("/api/v1/auth/login", authLimiter);
 app.use("/api/v1/auth/register", registerLimiter);
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/tasks", taskRoutes);
+app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/applications", applicationLimiter, applicationRoutes);
 app.use("/api/v1/analytics", analyticsRoutes);
 

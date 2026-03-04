@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import API from "../services/api";
 import RatingModal from "../components/RatingModal";
+import { Link } from "react-router-dom";
 
 function EmployerDashboard() {
   const [dashboard, setDashboard] = useState({
@@ -87,7 +88,6 @@ function EmployerDashboard() {
 
   return (
     <div className="bg-gray-50 min-h-screen flex relative">
-      {/* MOBILE OVERLAY */}
       {sidebarOpen && (
         <div
           onClick={() => setSidebarOpen(false)}
@@ -95,7 +95,6 @@ function EmployerDashboard() {
         />
       )}
 
-      {/* SIDEBAR */}
       <div
         className={`
           fixed md:static z-50 top-0 left-0 h-full bg-white border-r shadow-sm
@@ -146,18 +145,8 @@ function EmployerDashboard() {
         </nav>
       </div>
 
-      {/* MAIN CONTENT */}
-      <div className="flex-1 p-6 md:p-10 ml-0 md:ml-0">
-        {/* MOBILE HEADER */}
-        <div className="md:hidden mb-6 flex justify-between items-center">
-          <button onClick={() => setSidebarOpen(true)} className="text-2xl">
-            ☰
-          </button>
-          <h1 className="text-lg font-semibold">Dashboard</h1>
-        </div>
-
+      <div className="flex-1 p-6 md:p-10">
         <div className="max-w-6xl mx-auto">
-          {/* HEADER */}
           <div className="mb-10 hidden md:block">
             <h1>Employer Dashboard</h1>
             <p className="text-gray-500 mt-2">
@@ -165,31 +154,6 @@ function EmployerDashboard() {
             </p>
           </div>
 
-          {/* SUMMARY CARDS */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <p className="text-sm text-gray-500">Total Tasks</p>
-              <p className="text-3xl font-bold text-blue-900 mt-2">
-                {totalTasks}
-              </p>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <p className="text-sm text-gray-500">Open</p>
-              <p className="text-3xl font-bold text-green-600 mt-2">
-                {dashboard.open.length}
-              </p>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <p className="text-sm text-gray-500">Completed</p>
-              <p className="text-3xl font-bold text-orange-500 mt-2">
-                {dashboard.completed.length}
-              </p>
-            </div>
-          </div>
-
-          {/* TASK CONTENT */}
           {activeTab === "open" &&
             dashboard.open.map((task) => (
               <div
@@ -214,24 +178,27 @@ function EmployerDashboard() {
 
                 {expandedTask === task._id && (
                   <div className="border-t bg-gray-50 p-6 space-y-4">
-                    {applications.length === 0 ? (
-                      <p className="text-sm text-gray-500">
-                        No applications yet.
-                      </p>
-                    ) : (
-                      applications.map((app) => (
-                        <div
-                          key={app._id}
-                          className="bg-white p-5 rounded-xl shadow-sm flex justify-between items-center"
-                        >
-                          <div>
-                            <p className="font-semibold">
-                              {app.freelancer.name}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              Rating: {app.freelancer.ratingAverage || 0}
-                            </p>
-                          </div>
+                    {applications.map((app) => (
+                      <div
+                        key={app._id}
+                        className="bg-white p-5 rounded-xl shadow-sm flex justify-between items-center"
+                      >
+                        <div>
+                          <p className="font-semibold">{app.freelancer.name}</p>
+
+                          <p className="text-sm text-gray-500">
+                            ⭐ {app.freelancer?.rating?.average || 0}(
+                            {app.freelancer?.rating?.count || 0} reviews)
+                          </p>
+                        </div>
+
+                        <div className="flex gap-3">
+                          <Link
+                            to={`/freelancer/profile/${app.freelancer._id}`}
+                            className="bg-gray-200 px-4 py-2 rounded hover:bg-gray-300"
+                          >
+                            View Profile
+                          </Link>
 
                           <button
                             onClick={() => handleAssign(task._id, app._id)}
@@ -240,55 +207,10 @@ function EmployerDashboard() {
                             Assign
                           </button>
                         </div>
-                      ))
-                    )}
+                      </div>
+                    ))}
                   </div>
                 )}
-              </div>
-            ))}
-
-          {activeTab === "assigned" &&
-            dashboard.assigned.map((task) => (
-              <div
-                key={task._id}
-                className="bg-white rounded-xl shadow-md p-6 mb-6 flex justify-between items-center"
-              >
-                <div>
-                  <h3>{task.title}</h3>
-                  <p className="text-green-600 font-semibold mt-1">
-                    ৳ {task.budgetAmount}
-                  </p>
-                  <p className="text-sm text-gray-500 mt-2">
-                    Assigned to: {task.assignedFreelancer?.name}
-                  </p>
-                </div>
-
-                <button
-                  onClick={() => handleComplete(task._id)}
-                  className="bg-blue-900 text-white px-5 py-2 rounded-lg hover:bg-blue-800 transition"
-                >
-                  Mark as Completed
-                </button>
-              </div>
-            ))}
-
-          {activeTab === "completed" &&
-            dashboard.completed.map((task) => (
-              <div
-                key={task._id}
-                className="bg-white rounded-xl shadow-md p-6 mb-6"
-              >
-                <h3>{task.title}</h3>
-                <p className="text-green-600 font-semibold mt-1">
-                  ৳ {task.budgetAmount}
-                </p>
-                <p className="text-sm text-gray-500 mt-2">
-                  Completed by: {task.assignedFreelancer?.name}
-                </p>
-
-                <span className="inline-block mt-3 px-3 py-1 text-xs bg-green-100 text-green-800 rounded-full">
-                  Completed ✔
-                </span>
               </div>
             ))}
 

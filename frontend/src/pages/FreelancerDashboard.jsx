@@ -67,87 +67,11 @@ function FreelancerDashboard() {
     ));
   };
 
-  const menuItems = [
-    { key: "applied", label: "Applied", icon: "📄" },
-    { key: "assigned", label: "Assigned", icon: "👤" },
-    { key: "completed", label: "Completed", icon: "✅" },
-    { key: "rejected", label: "Rejected", icon: "❌" },
-  ];
-
   return (
     <div className="bg-gray-50 min-h-screen flex relative">
-      {/* MOBILE OVERLAY */}
-      {sidebarOpen && (
-        <div
-          onClick={() => setSidebarOpen(false)}
-          className="fixed inset-0 bg-black bg-opacity-40 z-40 md:hidden"
-        />
-      )}
-
-      {/* SIDEBAR */}
-      <div
-        className={`
-          fixed md:static z-50 top-0 left-0 h-full bg-white border-r shadow-sm
-          transform transition-transform duration-300
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-          md:translate-x-0
-          ${collapsed ? "w-20" : "w-64"}
-        `}
-      >
-        <div className="p-6 flex justify-between items-center">
-          {!collapsed && (
-            <h2 className="text-lg font-semibold text-blue-900">Freelancer</h2>
-          )}
-
-          <button
-            onClick={() => setCollapsed(!collapsed)}
-            className="hidden md:block text-gray-500 hover:text-blue-900"
-          >
-            {collapsed ? "➡️" : "⬅️"}
-          </button>
-
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="md:hidden text-gray-500"
-          >
-            ✕
-          </button>
-        </div>
-
-        <nav className="space-y-2 px-3">
-          {menuItems.map((item) => (
-            <button
-              key={item.key}
-              onClick={() => {
-                setActiveTab(item.key);
-                setSidebarOpen(false);
-              }}
-              className={`flex items-center gap-3 w-full px-4 py-2 rounded-lg transition ${
-                activeTab === item.key
-                  ? "bg-blue-900 text-white"
-                  : "text-gray-600 hover:bg-gray-100"
-              }`}
-            >
-              <span className="text-lg">{item.icon}</span>
-              {!collapsed && <span>{item.label}</span>}
-            </button>
-          ))}
-        </nav>
-      </div>
-
-      {/* MAIN CONTENT */}
       <div className="flex-1 p-6 md:p-10">
-        {/* MOBILE HEADER */}
-        <div className="md:hidden mb-6 flex justify-between items-center">
-          <button onClick={() => setSidebarOpen(true)} className="text-2xl">
-            ☰
-          </button>
-          <h1 className="text-lg font-semibold">Dashboard</h1>
-        </div>
-
         <div className="max-w-6xl mx-auto">
-          {/* HEADER */}
-          <div className="mb-10 hidden md:block">
+          <div className="mb-10">
             <h1>Freelancer Dashboard</h1>
             <p className="text-gray-500 mt-2">
               Browse tasks and manage your assigned work.
@@ -155,7 +79,6 @@ function FreelancerDashboard() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            {/* TASK LIST */}
             <div className="md:col-span-2">
               {activeTab === "applied" &&
                 renderTasks(
@@ -186,7 +109,6 @@ function FreelancerDashboard() {
                 )}
             </div>
 
-            {/* PROFILE CARD */}
             <div className="bg-white p-6 rounded-xl shadow-md text-center h-fit">
               <img
                 src="https://i.pravatar.cc/150?img=12"
@@ -194,12 +116,15 @@ function FreelancerDashboard() {
                 className="w-24 h-24 rounded-full mx-auto mb-4"
               />
 
-              <h2>{freelancer?.name}</h2>
+              <Link to={`/freelancer/profile/${freelancer._id}`}>
+                <h2 className="font-semibold text-lg hover:text-blue-800 cursor-pointer">
+                  {freelancer?.name}
+                </h2>
+              </Link>
 
-              <div className="text-yellow-500 mt-2">
-                {"★".repeat(Math.round(freelancer?.rating?.average || 0))}
-                {"☆".repeat(5 - Math.round(freelancer?.rating?.average || 0))}
-              </div>
+              <p className="text-yellow-500 mt-2">
+                ⭐ {freelancer?.rating?.average || 0}
+              </p>
 
               <p className="text-sm text-gray-500 mt-2">
                 ({freelancer?.rating?.count || 0} reviews)
@@ -214,7 +139,6 @@ function FreelancerDashboard() {
             </div>
           </div>
 
-          {/* Browse Button */}
           <div className="mt-12 text-center">
             <Link
               to="/tasks"
