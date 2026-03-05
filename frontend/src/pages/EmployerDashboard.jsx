@@ -15,9 +15,6 @@ function EmployerDashboard() {
   const [applications, setApplications] = useState([]);
   const [ratingTaskId, setRatingTaskId] = useState(null);
 
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
-
   useEffect(() => {
     fetchDashboard();
   }, []);
@@ -25,13 +22,14 @@ function EmployerDashboard() {
   const fetchDashboard = async () => {
     try {
       const res = await API.get("/tasks/employer/dashboard");
+
       setDashboard({
         open: res.data.open || [],
         assigned: res.data.assigned || [],
         completed: res.data.completed || [],
       });
     } catch (error) {
-      console.error("Error loading dashboard:", error);
+      console.error("Dashboard error:", error);
     }
   };
 
@@ -47,7 +45,7 @@ function EmployerDashboard() {
       setApplications(res.data.applications);
       setExpandedTask(taskId);
     } catch (error) {
-      console.error("Error loading applications:", error);
+      console.error("Applications load error:", error);
     }
   };
 
@@ -64,7 +62,7 @@ function EmployerDashboard() {
   };
 
   const handleComplete = async (taskId) => {
-    if (!window.confirm("Mark task as completed?")) return;
+    if (!window.confirm("Mark task completed?")) return;
 
     try {
       await API.patch(`/tasks/${taskId}/complete`);
@@ -75,153 +73,145 @@ function EmployerDashboard() {
     }
   };
 
-  const totalTasks =
-    dashboard.open.length +
-    dashboard.assigned.length +
-    dashboard.completed.length;
-
   const menuItems = [
-    { key: "open", label: "Open", icon: "📂" },
-    { key: "assigned", label: "Assigned", icon: "👤" },
-    { key: "completed", label: "Completed", icon: "✅" },
+    { key: "open", label: "Open Tasks" },
+    { key: "assigned", label: "Assigned Tasks" },
+    { key: "completed", label: "Completed Tasks" },
   ];
 
-  return (
-    <div className="bg-gray-50 min-h-screen flex relative">
-      {sidebarOpen && (
-        <div
-          onClick={() => setSidebarOpen(false)}
-          className="fixed inset-0 bg-black bg-opacity-40 z-40 md:hidden"
-        />
-      )}
+  const renderBadge = (task) => {
+    if (activeTab === "open") {
+      return (
+        <span className="px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full">
+          {task.applicationsCount || 0} Applications
+        </span>
+      );
+    }
 
+    if (activeTab === "assigned") {
+      return (
+        <span className="px-3 py-1 text-sm bg-yellow-100 text-yellow-800 rounded-full">
+          Assigned to {task.assignedFreelancer?.name || "Freelancer"}
+        </span>
+      );
+    }
+
+    if (activeTab === "completed") {
+      return (
+        <span className="px-3 py-1 text-sm bg-green-100 text-green-800 rounded-full">
+          Completed by {task.assignedFreelancer?.name || "Freelancer"}
+        </span>
+      );
+    }
+  };
+
+  const renderTask = (task) => (
+    <div
+      key={task._id}
+      className="bg-white rounded-xl shadow-md mb-6 overflow-hidden"
+    >
       <div
-        className={`
-          fixed md:static z-50 top-0 left-0 h-full bg-white border-r shadow-sm
-          transform transition-transform duration-300
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-          md:translate-x-0
-          ${collapsed ? "w-20" : "w-64"}
-        `}
+        onClick={() => toggleTask(task._id)}
+        className="p-6 flex justify-between items-center cursor-pointer hover:bg-gray-50"
       >
-        <div className="p-6 flex justify-between items-center">
-          {!collapsed && (
-            <h2 className="text-lg font-semibold text-blue-900">Employer</h2>
-          )}
+        <div>
+          <h3 className="font-semibold">{task.title}</h3>
 
-          <button
-            onClick={() => setCollapsed(!collapsed)}
-            className="hidden md:block text-gray-500 hover:text-blue-900"
-          >
-            {collapsed ? "➡️" : "⬅️"}
-          </button>
-
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="md:hidden text-gray-500"
-          >
-            ✕
-          </button>
+          <p className="text-green-600 font-semibold mt-1">
+            ৳ {task.budgetAmount}
+          </p>
         </div>
 
-        <nav className="space-y-2 px-3">
+        {renderBadge(task)}
+      </div>
+
+      {activeTab === "open" && expandedTask === task._id && (
+        <div className="border-t bg-gray-50 p-6 space-y-4">
+          {applications.map((app) => (
+            <div
+              key={app._id}
+              className="bg-white p-5 rounded-xl shadow-sm flex justify-between items-center"
+            >
+              <div>
+                <p className="font-semibold">{app.freelancer.name}</p>
+
+                <p className="text-sm text-gray-500">
+                  ⭐ {app.freelancer?.rating?.average || 0} (
+                  {app.freelancer?.rating?.count || 0} reviews)
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <Link
+                  to={`/freelancer/profile/${app.freelancer._id}`}
+                  className="bg-gray-200 px-4 py-2 rounded"
+                >
+                  View Profile
+                </Link>
+
+                <button
+                  onClick={() => handleAssign(task._id, app._id)}
+                  className="bg-green-600 text-white px-4 py-2 rounded"
+                >
+                  Assign
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {activeTab === "assigned" && (
+        <div className="border-t p-6">
+          <button
+            onClick={() => handleComplete(task._id)}
+            className="bg-blue-700 text-white px-4 py-2 rounded"
+          >
+            Mark Completed
+          </button>
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex">
+      <div className="w-64 bg-white border-r p-6">
+        <h2 className="text-lg font-semibold mb-6">Employer</h2>
+
+        <div className="space-y-2">
           {menuItems.map((item) => (
             <button
               key={item.key}
-              onClick={() => {
-                setActiveTab(item.key);
-                setSidebarOpen(false);
-              }}
-              className={`flex items-center gap-3 w-full px-4 py-2 rounded-lg transition ${
+              onClick={() => setActiveTab(item.key)}
+              className={`block w-full text-left px-4 py-2 rounded ${
                 activeTab === item.key
                   ? "bg-blue-900 text-white"
-                  : "text-gray-600 hover:bg-gray-100"
+                  : "hover:bg-gray-100"
               }`}
             >
-              <span className="text-lg">{item.icon}</span>
-              {!collapsed && <span>{item.label}</span>}
+              {item.label}
             </button>
           ))}
-        </nav>
+        </div>
       </div>
 
-      <div className="flex-1 p-6 md:p-10">
-        <div className="max-w-6xl mx-auto">
-          <div className="mb-10 hidden md:block">
-            <h1>Employer Dashboard</h1>
-            <p className="text-gray-500 mt-2">
-              Manage your tasks and applications efficiently.
-            </p>
-          </div>
+      <div className="flex-1 p-10">
+        <h1 className="text-2xl font-bold mb-6">Employer Dashboard</h1>
 
-          {activeTab === "open" &&
-            dashboard.open.map((task) => (
-              <div
-                key={task._id}
-                className="bg-white rounded-xl shadow-md mb-6 overflow-hidden"
-              >
-                <div
-                  onClick={() => toggleTask(task._id)}
-                  className="p-6 flex justify-between items-center cursor-pointer hover:bg-gray-50 transition"
-                >
-                  <div>
-                    <h3>{task.title}</h3>
-                    <p className="text-green-600 font-semibold mt-1">
-                      ৳ {task.budgetAmount}
-                    </p>
-                  </div>
+        {dashboard[activeTab].length === 0 && (
+          <p className="text-gray-500">No tasks in this section.</p>
+        )}
 
-                  <span className="px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full">
-                    {task.applicationsCount} Applications
-                  </span>
-                </div>
+        {dashboard[activeTab].map(renderTask)}
 
-                {expandedTask === task._id && (
-                  <div className="border-t bg-gray-50 p-6 space-y-4">
-                    {applications.map((app) => (
-                      <div
-                        key={app._id}
-                        className="bg-white p-5 rounded-xl shadow-sm flex justify-between items-center"
-                      >
-                        <div>
-                          <p className="font-semibold">{app.freelancer.name}</p>
-
-                          <p className="text-sm text-gray-500">
-                            ⭐ {app.freelancer?.rating?.average || 0}(
-                            {app.freelancer?.rating?.count || 0} reviews)
-                          </p>
-                        </div>
-
-                        <div className="flex gap-3">
-                          <Link
-                            to={`/freelancer/profile/${app.freelancer._id}`}
-                            className="bg-gray-200 px-4 py-2 rounded hover:bg-gray-300"
-                          >
-                            View Profile
-                          </Link>
-
-                          <button
-                            onClick={() => handleAssign(task._id, app._id)}
-                            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
-                          >
-                            Assign
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-
-          {ratingTaskId && (
-            <RatingModal
-              taskId={ratingTaskId}
-              onClose={() => setRatingTaskId(null)}
-              onSuccess={fetchDashboard}
-            />
-          )}
-        </div>
+        {ratingTaskId && (
+          <RatingModal
+            taskId={ratingTaskId}
+            onClose={() => setRatingTaskId(null)}
+            onSuccess={fetchDashboard}
+          />
+        )}
       </div>
     </div>
   );

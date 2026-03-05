@@ -3,7 +3,7 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
 
-import Home from "./pages/Home";
+import RoleSelectionPage from "./pages/RoleSelectionPage";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import EmployerDashboard from "./pages/EmployerDashboard";
@@ -16,6 +16,9 @@ import Privacy from "./pages/Privacy";
 import Tasks from "./pages/Tasks";
 import TaskDetails from "./pages/TaskDetails";
 import FreelancerProfile from "./pages/FreelancerProfile";
+import GuestEmployerPage from "./pages/GuestEmployerPage";
+import GuestFreelancerPage from "./pages/GuestFreelancerPage";
+import FeedbackPage from "./pages/FeedbackPage";
 
 function App() {
   return (
@@ -24,7 +27,9 @@ function App() {
 
       <div className="flex-grow">
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<RoleSelectionPage />} />
+          <Route path="/employers" element={<GuestEmployerPage />} />
+          <Route path="/freelancers" element={<GuestFreelancerPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
@@ -62,6 +67,7 @@ function App() {
           <Route path="/task/:id" element={<TaskDetails />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
+          <Route path="/feedback" element={<FeedbackPage />} />
           <Route path="/403" element={<Forbidden />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
