@@ -29,10 +29,16 @@ function Login() {
 
       login(res.data);
 
-      if (res.data.user.role === "employer") {
+      const role = res.data.user.role;
+
+      if (role === "admin") {
+        navigate("/admin/dashboard");
+      } else if (role === "employer") {
         navigate("/employer/dashboard");
-      } else {
+      } else if (role === "freelancer") {
         navigate("/freelancer/dashboard");
+      } else {
+        navigate("/");
       }
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");
@@ -62,6 +68,7 @@ function Login() {
             <label className="block text-sm font-medium text-gray-600 mb-1">
               Email Address
             </label>
+
             <input
               type="email"
               name="email"
@@ -78,6 +85,7 @@ function Login() {
             <label className="block text-sm font-medium text-gray-600 mb-1">
               Password
             </label>
+
             <input
               type="password"
               name="password"

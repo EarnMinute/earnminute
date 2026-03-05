@@ -19,6 +19,8 @@ import FreelancerProfile from "./pages/FreelancerProfile";
 import GuestEmployerPage from "./pages/GuestEmployerPage";
 import GuestFreelancerPage from "./pages/GuestFreelancerPage";
 import FeedbackPage from "./pages/FeedbackPage";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminUsers from "./pages/AdminUsers";
 
 function App() {
   return (
@@ -33,6 +35,22 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute role="admin">
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute role="admin">
+                <AdminUsers />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/employer/dashboard"
             element={

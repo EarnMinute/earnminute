@@ -16,6 +16,7 @@ function Navbar() {
 
     const role = user?.user?.role;
 
+    if (role === "admin") return "/admin/dashboard";
     if (role === "employer") return "/employer/dashboard";
     if (role === "freelancer") return "/freelancer/dashboard";
 
