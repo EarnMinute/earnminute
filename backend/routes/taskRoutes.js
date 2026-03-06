@@ -7,6 +7,8 @@ const {
   getEmployerDashboard,
   completeTask,
   rateFreelancer,
+  getAllTasksAdmin,
+  deleteTaskAdmin,
 } = require("../controllers/taskController");
 
 const { protect } = require("../middleware/authMiddleware");
@@ -46,6 +48,24 @@ router.patch(
   protect,
   restrictTo("employer"),
   rateFreelancer
+);
+
+/* ===============================
+   ADMIN ROUTES
+================================= */
+
+router.get(
+  "/admin/all",
+  protect,
+  restrictTo("admin"),
+  getAllTasksAdmin
+);
+
+router.delete(
+  "/admin/:id",
+  protect,
+  restrictTo("admin"),
+  deleteTaskAdmin
 );
 
 module.exports = router;

@@ -162,3 +162,29 @@ exports.getFreelancerDashboard = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+/* ===============================
+   ADMIN: GET ALL APPLICATIONS
+================================= */
+exports.getAllApplicationsAdmin = async (req, res) => {
+  try {
+    const applications = await Application.find()
+      .populate("freelancer", "name email")
+      .populate({
+        path: "task",
+        select: "title status budgetAmount",
+        populate: {
+          path: "employer",
+          select: "name email",
+        },
+      })
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(applications);
+
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to fetch applications",
+      error: error.message,
+    });
+  }
+};

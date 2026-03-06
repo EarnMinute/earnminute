@@ -3,9 +3,12 @@ const User = require("../models/User");
 const Application = require("../models/Application");
 const Analytics = require("../models/Analytics");
 
-// 🔹 PUBLIC HOMEPAGE STATS
+/* ===============================
+   PUBLIC HOMEPAGE STATS
+================================ */
 exports.getPublicAnalytics = async (req, res) => {
   try {
+
     const totalTasks = await Task.countDocuments({
       isDeleted: { $ne: true },
     });
@@ -24,6 +27,7 @@ exports.getPublicAnalytics = async (req, res) => {
       totalTasks,
       totalEarned,
     });
+
   } catch (error) {
     res.status(500).json({
       message: "Analytics error",
@@ -32,9 +36,15 @@ exports.getPublicAnalytics = async (req, res) => {
   }
 };
 
-// 🔹 ADMIN DASHBOARD ANALYTICS
+/* ===============================
+   ADMIN DASHBOARD + CHART ANALYTICS
+================================ */
 exports.getAdminDashboardAnalytics = async (req, res) => {
   try {
+
+    /* ===============================
+       PLATFORM COUNTS
+    ================================= */
 
     const totalUsers = await User.countDocuments();
 
@@ -52,11 +62,19 @@ exports.getAdminDashboardAnalytics = async (req, res) => {
 
     const totalApplications = await Application.countDocuments();
 
+    /* ===============================
+       ACTIVE TODAY
+    ================================= */
+
     const today = new Date().toISOString().split("T")[0];
 
     const todayAnalytics = await Analytics.findOne({ date: today });
 
     const activeToday = todayAnalytics ? todayAnalytics.logins : 0;
+
+    /* ===============================
+       RECENT DATA
+    ================================= */
 
     const recentUsers = await User.find()
       .sort({ createdAt: -1 })
@@ -70,6 +88,59 @@ exports.getAdminDashboardAnalytics = async (req, res) => {
       .limit(5)
       .populate("employer", "name");
 
+    /* ===============================
+       TRAFFIC CHART DATA
+    ================================= */
+
+    const analyticsHistory = await Analytics.find()
+      .sort({ date: 1 })
+      .limit(30);
+
+    /* ===============================
+       TASKS PER DAY
+    ================================= */
+
+    const tasksPerDay = await Task.aggregate([
+      {
+        $match: { isDeleted: { $ne: true } }
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: {
+              format: "%Y-%m-%d",
+              date: "$createdAt"
+            }
+          },
+          tasks: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } },
+      { $limit: 30 }
+    ]);
+
+    /* ===============================
+       MERGE DATA FOR CHARTS
+    ================================= */
+
+    const chartData = analyticsHistory.map(day => {
+
+      const taskDay = tasksPerDay.find(t => t._id === day.date);
+
+      return {
+        date: day.date,
+        visits: day.visits || 0,
+        registrations: day.registrations || 0,
+        logins: day.logins || 0,
+        tasks: taskDay ? taskDay.tasks : 0
+      };
+
+    });
+
+    /* ===============================
+       FINAL RESPONSE
+    ================================= */
+
     res.status(200).json({
       totalUsers,
       totalFreelancers,
@@ -79,18 +150,24 @@ exports.getAdminDashboardAnalytics = async (req, res) => {
       activeToday,
       recentUsers,
       recentTasks,
+      chartData
     });
 
   } catch (error) {
+
     res.status(500).json({
       message: "Admin analytics error",
       error: error.message,
     });
+
   }
 };
 
-// 🔹 Increment Website Visit
+/* ===============================
+   INCREMENT VISIT
+================================ */
 exports.incrementVisit = async () => {
+
   const today = new Date().toISOString().split("T")[0];
 
   await Analytics.findOneAndUpdate(
@@ -98,10 +175,14 @@ exports.incrementVisit = async () => {
     { $inc: { visits: 1 } },
     { upsert: true, new: true }
   );
+
 };
 
-// 🔹 Increment Registration
+/* ===============================
+   INCREMENT REGISTRATION
+================================ */
 exports.incrementRegistration = async () => {
+
   const today = new Date().toISOString().split("T")[0];
 
   await Analytics.findOneAndUpdate(
@@ -109,10 +190,14 @@ exports.incrementRegistration = async () => {
     { $inc: { registrations: 1 } },
     { upsert: true, new: true }
   );
+
 };
 
-// 🔹 Increment Login
+/* ===============================
+   INCREMENT LOGIN
+================================ */
 exports.incrementLogin = async () => {
+
   const today = new Date().toISOString().split("T")[0];
 
   await Analytics.findOneAndUpdate(
@@ -120,4 +205,5 @@ exports.incrementLogin = async () => {
     { $inc: { logins: 1 } },
     { upsert: true, new: true }
   );
+
 };

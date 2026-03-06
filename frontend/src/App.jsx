@@ -21,6 +21,8 @@ import GuestFreelancerPage from "./pages/GuestFreelancerPage";
 import FeedbackPage from "./pages/FeedbackPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminUsers from "./pages/AdminUsers";
+import AdminTasks from "./pages/AdminTasks";
+import AdminAnalytics from "./pages/AdminAnalytics";
 
 function App() {
   return (
@@ -48,6 +50,22 @@ function App() {
             element={
               <ProtectedRoute role="admin">
                 <AdminUsers />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/tasks"
+            element={
+              <ProtectedRoute role="admin">
+                <AdminTasks />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/analytics"
+            element={
+              <ProtectedRoute role="admin">
+                <AdminAnalytics />
               </ProtectedRoute>
             }
           />

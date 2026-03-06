@@ -6,12 +6,28 @@ const {
   getApplicationsForTask,
   assignFreelancer,
   getFreelancerDashboard,
+  getAllApplicationsAdmin,
 } = require("../controllers/applicationController");
 
 const { protect } = require("../middleware/authMiddleware");
 const { restrictTo } = require("../middleware/roleMiddleware");
 
-// 🔹 Freelancer dashboard (MUST be before :taskId route)
+/* ===============================
+   ADMIN ROUTES
+================================= */
+
+router.get(
+  "/admin/all",
+  protect,
+  restrictTo("admin"),
+  getAllApplicationsAdmin
+);
+
+/* ===============================
+   FREELANCER ROUTES
+================================= */
+
+// Freelancer dashboard (must stay before :taskId)
 router.get(
   "/freelancer/dashboard",
   protect,
@@ -19,7 +35,7 @@ router.get(
   getFreelancerDashboard
 );
 
-// 🔹 Freelancer apply
+// Freelancer apply
 router.post(
   "/:taskId",
   protect,
@@ -27,7 +43,11 @@ router.post(
   applyToTask
 );
 
-// 🔹 Employer view applications
+/* ===============================
+   EMPLOYER ROUTES
+================================= */
+
+// Employer view applications
 router.get(
   "/:taskId",
   protect,
@@ -35,7 +55,7 @@ router.get(
   getApplicationsForTask
 );
 
-// 🔹 Employer assign
+// Employer assign freelancer
 router.patch(
   "/:taskId/assign/:applicationId",
   protect,

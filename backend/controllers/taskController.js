@@ -1,5 +1,6 @@
 const Task = require("../models/Task");
 const User = require("../models/User");
+const Application = require("../models/Application");
 
 /* ===============================
    CREATE TASK
@@ -130,16 +131,8 @@ exports.rateFreelancer = async (req, res) => {
         message: "Task already rated",
       });
 
-    const freelancer = await User.findById(
-      task.assignedFreelancer
-    );
+    const freelancer = await User.findById(task.assignedFreelancer);
 
-    if (!freelancer)
-      return res.status(404).json({
-        message: "Freelancer not found",
-      });
-
-    // 🔥 Update structured rating
     freelancer.rating.total += rating;
     freelancer.rating.count += 1;
     freelancer.rating.average =
@@ -147,7 +140,6 @@ exports.rateFreelancer = async (req, res) => {
 
     await freelancer.save();
 
-    // Save rating inside task
     task.isRated = true;
     task.rating = rating;
     task.review = review;
@@ -161,6 +153,67 @@ exports.rateFreelancer = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       message: "Server Error",
+      error: error.message,
+    });
+  }
+};
+
+/* ===============================
+   ADMIN: GET ALL TASKS (UNIFIED)
+================================= */
+exports.getAllTasksAdmin = async (req, res) => {
+  try {
+    const tasks = await Task.find({ isDeleted: { $ne: true } })
+      .populate("employer", "name email")
+      .populate("assignedFreelancer", "name rating")
+      .sort({ createdAt: -1 });
+
+    const tasksWithApplications = await Promise.all(
+      tasks.map(async (task) => {
+        const applications = await Application.find({
+          task: task._id,
+        }).populate("freelancer", "name rating");
+
+        return {
+          ...task.toObject(),
+          applications,
+        };
+      })
+    );
+
+    res.status(200).json(tasksWithApplications);
+
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to fetch tasks",
+      error: error.message,
+    });
+  }
+};
+
+/* ===============================
+   ADMIN: DELETE TASK
+================================= */
+exports.deleteTaskAdmin = async (req, res) => {
+  try {
+    const task = await Task.findById(req.params.id);
+
+    if (!task) {
+      return res.status(404).json({
+        message: "Task not found",
+      });
+    }
+
+    task.isDeleted = true;
+    await task.save();
+
+    res.status(200).json({
+      message: "Task deleted successfully",
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to delete task",
       error: error.message,
     });
   }

@@ -7,7 +7,6 @@ function AdminSidebar() {
     { name: "Dashboard", path: "/admin/dashboard" },
     { name: "Users", path: "/admin/users" },
     { name: "Tasks", path: "/admin/tasks" },
-    { name: "Applications", path: "/admin/applications" },
     { name: "Analytics", path: "/admin/analytics" },
   ];
 

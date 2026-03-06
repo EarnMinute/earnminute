@@ -8,6 +8,7 @@ const mongoSanitize = require("express-mongo-sanitize");
 const { applicationLimiter } = require("./middleware/abuseLimiter");
 const morgan = require("morgan");
 const userRoutes = require("./routes/userRoutes");
+const { incrementVisit } = require("./controllers/analyticsController");
 
 dotenv.config();
 
@@ -18,6 +19,7 @@ const app = express();
 if (process.env.NODE_ENV !== "production") {
   app.use(morgan("dev"));
 }
+
 if (process.env.NODE_ENV === "production") {
   app.use(morgan("combined"));
 }
@@ -80,6 +82,18 @@ app.use(express.json({ limit: "10kb" }));
 app.use(mongoSanitize());
 
 /* ===============================
+   ANALYTICS VISIT TRACKER
+================================ */
+app.use(async (req, res, next) => {
+  try {
+    await incrementVisit();
+  } catch (err) {
+    console.error("Visit analytics error");
+  }
+  next();
+});
+
+/* ===============================
    CORS (ENV BASED)
 ================================ */
 const allowedOrigins =
@@ -91,9 +105,11 @@ app.use(
   cors({
     origin: function (origin, callback) {
       if (!origin) return callback(null, true);
+
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
+
       return callback(new Error("CORS not allowed"));
     },
     credentials: true,
@@ -114,6 +130,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/v1/auth/login", authLimiter);
 app.use("/api/v1/auth/register", registerLimiter);
+
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/tasks", taskRoutes);
 app.use("/api/v1/users", userRoutes);
