@@ -1,66 +1,47 @@
 const express = require("express");
-const router = express.Router();
 
-const {
-  applyToTask,
-  getApplicationsForTask,
-  assignFreelancer,
-  getFreelancerDashboard,
-  getAllApplicationsAdmin,
-} = require("../controllers/applicationController");
-
+const applicationController = require("../controllers/applicationController");
 const { protect } = require("../middleware/authMiddleware");
 const { restrictTo } = require("../middleware/roleMiddleware");
+const { applicationLimiter } = require("../middleware/abuseLimiter");
 
-/* ===============================
-   ADMIN ROUTES
-================================= */
+const router = express.Router();
 
-router.get(
-  "/admin/all",
-  protect,
-  restrictTo("admin"),
-  getAllApplicationsAdmin
-);
-
-/* ===============================
+/* ======================================
    FREELANCER ROUTES
-================================= */
+====================================== */
 
-// Freelancer dashboard (must stay before :taskId)
-router.get(
-  "/freelancer/dashboard",
-  protect,
-  restrictTo("freelancer"),
-  getFreelancerDashboard
-);
-
-// Freelancer apply
 router.post(
-  "/:taskId",
+  "/:taskId/apply",
   protect,
   restrictTo("freelancer"),
-  applyToTask
+  applicationLimiter,
+  applicationController.applyToTask
 );
 
-/* ===============================
-   EMPLOYER ROUTES
-================================= */
-
-// Employer view applications
 router.get(
-  "/:taskId",
+  "/my",
+  protect,
+  restrictTo("freelancer"),
+  applicationController.getMyApplications
+);
+
+/* ======================================
+   EMPLOYER ROUTES
+====================================== */
+
+router.get(
+  "/task/:taskId",
   protect,
   restrictTo("employer"),
-  getApplicationsForTask
+  applicationController.getApplicationsForTask
 );
 
-// Employer assign freelancer
 router.patch(
   "/:taskId/assign/:applicationId",
   protect,
   restrictTo("employer"),
-  assignFreelancer
+  applicationController.assignFreelancer
 );
 
 module.exports = router;

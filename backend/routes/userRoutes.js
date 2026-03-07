@@ -1,23 +1,43 @@
 const express = require("express");
+
+const userController = require("../controllers/userController");
+const { protect } = require("../middleware/authMiddleware");
+const { restrictTo } = require("../middleware/roleMiddleware");
+
 const router = express.Router();
 
-const {
-  getFreelancerProfile,
-  getAllUsersAdmin,
-  changeUserRole,
-  deleteUserAdmin,
-} = require("../controllers/userController");
-
-/* =========================
+/* ======================================
    PUBLIC
-========================= */
-router.get("/freelancer/:id", getFreelancerProfile);
+====================================== */
 
-/* =========================
+router.get(
+  "/freelancer/:id",
+  userController.getFreelancerProfile
+);
+
+/* ======================================
    ADMIN ROUTES
-========================= */
-router.get("/admin/all", getAllUsersAdmin);
-router.patch("/admin/role/:id", changeUserRole);
-router.delete("/admin/:id", deleteUserAdmin);
+====================================== */
+
+router.get(
+  "/admin/all",
+  protect,
+  restrictTo("admin"),
+  userController.getAllUsersAdmin
+);
+
+router.patch(
+  "/admin/role/:id",
+  protect,
+  restrictTo("admin"),
+  userController.changeUserRole
+);
+
+router.delete(
+  "/admin/:id",
+  protect,
+  restrictTo("admin"),
+  userController.deleteUserAdmin
+);
 
 module.exports = router;

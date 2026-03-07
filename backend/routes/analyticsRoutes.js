@@ -1,14 +1,20 @@
 const express = require("express");
+
+const analyticsController = require("../controllers/analyticsController");
+const { protect } = require("../middleware/authMiddleware");
+const { restrictTo } = require("../middleware/roleMiddleware");
+
 const router = express.Router();
 
-const {
-  getPublicAnalytics,
-  getAdminDashboardAnalytics,
-} = require("../controllers/analyticsController");
+/* ======================================
+   ADMIN ANALYTICS
+====================================== */
 
-router.get("/public", getPublicAnalytics);
-
-// Admin dashboard stats
-router.get("/admin-dashboard", getAdminDashboardAnalytics);
+router.get(
+  "/admin/dashboard",
+  protect,
+  restrictTo("admin"),
+  analyticsController.getAdminDashboardStats
+);
 
 module.exports = router;

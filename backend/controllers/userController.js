@@ -1,84 +1,50 @@
-const User = require("../models/User");
+const userService = require("../services/userService");
+const asyncHandler = require("../utils/asyncHandler");
+const ApiResponse = require("../utils/ApiResponse");
 
-/* ==================================
-   PUBLIC FREELANCER PROFILE
-================================== */
-exports.getFreelancerProfile = async (req, res) => {
-  try {
-    const freelancer = await User.findById(req.params.id).select(
-      "name rating createdAt"
-    );
 
-    if (!freelancer) {
-      return res.status(404).json({ message: "Freelancer not found" });
-    }
+exports.getUserProfile = asyncHandler(async (req, res) => {
 
-    res.json(freelancer);
-  } catch (error) {
-    res.status(500).json({ message: "Server error" });
-  }
-};
+  const user = await userService.getUserById(req.user.id);
 
-/* ==================================
-   ADMIN: GET ALL USERS
-================================== */
-exports.getAllUsersAdmin = async (req, res) => {
-  try {
-    const users = await User.find()
-      .sort({ createdAt: -1 })
-      .select("name email role createdAt");
+  res.status(200).json(
+    new ApiResponse(200, user)
+  );
 
-    res.json(users);
-  } catch (error) {
-    res.status(500).json({ message: "Failed to fetch users" });
-  }
-};
+});
 
-/* ==================================
-   ADMIN: CHANGE USER ROLE
-================================== */
-exports.changeUserRole = async (req, res) => {
-  try {
-    const { role } = req.body;
 
-    const allowedRoles = ["freelancer", "employer", "admin"];
+exports.getAllUsers = asyncHandler(async (req, res) => {
 
-    if (!allowedRoles.includes(role)) {
-      return res.status(400).json({ message: "Invalid role" });
-    }
+  const users = await userService.getAllUsers();
 
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
-      { role },
-      { new: true }
-    ).select("name email role");
+  res.status(200).json(
+    new ApiResponse(200, users)
+  );
 
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+});
 
-    res.json({
-      message: "Role updated",
-      user,
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Failed to update role" });
-  }
-};
 
-/* ==================================
-   ADMIN: DELETE USER
-================================== */
-exports.deleteUserAdmin = async (req, res) => {
-  try {
-    const user = await User.findByIdAndDelete(req.params.id);
+exports.updateUserRole = asyncHandler(async (req, res) => {
 
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+  const user = await userService.updateUserRole(
+    req.params.id,
+    req.body.role
+  );
 
-    res.json({ message: "User deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ message: "Failed to delete user" });
-  }
-};
+  res.status(200).json(
+    new ApiResponse(200, user, "User role updated successfully")
+  );
+
+});
+
+
+exports.deleteUser = asyncHandler(async (req, res) => {
+
+  await userService.deleteUser(req.params.id);
+
+  res.status(200).json(
+    new ApiResponse(200, null, "User deleted successfully")
+  );
+
+});

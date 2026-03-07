@@ -1,71 +1,65 @@
 const express = require("express");
-const router = express.Router();
 
-const {
-  createTask,
-  getAllTasks,
-  getEmployerDashboard,
-  completeTask,
-  rateFreelancer,
-  getAllTasksAdmin,
-  deleteTaskAdmin,
-} = require("../controllers/taskController");
-
+const taskController = require("../controllers/taskController");
 const { protect } = require("../middleware/authMiddleware");
 const { restrictTo } = require("../middleware/roleMiddleware");
 
-/* ===============================
-   PUBLIC ROUTES
-================================= */
-router.get("/", getAllTasks);
+const router = express.Router();
 
-/* ===============================
+/* ======================================
+   PUBLIC ROUTES
+====================================== */
+
+router.get("/", taskController.getAllTasks);
+
+/* ======================================
    EMPLOYER ROUTES
-================================= */
+====================================== */
+
 router.get(
   "/employer/dashboard",
   protect,
   restrictTo("employer"),
-  getEmployerDashboard
+  taskController.getEmployerDashboard
 );
 
 router.post(
   "/",
   protect,
   restrictTo("employer"),
-  createTask
+  taskController.createTask
 );
 
 router.patch(
   "/:taskId/complete",
   protect,
   restrictTo("employer"),
-  completeTask
+  taskController.completeTask
 );
 
 router.patch(
   "/:taskId/rate",
   protect,
   restrictTo("employer"),
-  rateFreelancer
+  taskController.rateFreelancer
 );
 
-/* ===============================
+/* ======================================
    ADMIN ROUTES
-================================= */
+====================================== */
 
 router.get(
   "/admin/all",
   protect,
   restrictTo("admin"),
-  getAllTasksAdmin
+  taskController.getAllTasksAdmin
 );
 
 router.delete(
   "/admin/:id",
   protect,
   restrictTo("admin"),
-  deleteTaskAdmin
+  taskController.deleteTaskAdmin
 );
 
 module.exports = router;
