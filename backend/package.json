@@ -1,14 +1,14 @@
 {
-  "name": "taskforcebd-backend",
+  "name": "earnminute-backend",
   "version": "1.0.0",
-  "description": "TaskForce BD Backend API",
+  "description": "EarnMinute Backend API",
   "main": "server.js",
   "type": "commonjs",
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js"
   },
-  "author": "TaskForce BD",
+  "author": "Earn Minute",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^2.4.3",
