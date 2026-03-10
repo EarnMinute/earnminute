@@ -20,11 +20,12 @@ function TaskDetails() {
 
   const fetchTask = async () => {
     try {
-      const res = await API.get("/tasks");
-      const found = res.data.find((t) => t._id === id);
-      setTask(found);
+      const res = await API.get(`/tasks/${id}`);
+
+      setTask(res.data.task || null);
     } catch (err) {
-      console.error("Error loading task");
+      console.error("Error loading task:", err);
+      setTask(null);
     } finally {
       setLoading(false);
     }
@@ -37,12 +38,12 @@ function TaskDetails() {
       const res = await API.get("/applications/freelancer/dashboard");
 
       const allApplications = [
-        ...res.data.applied,
-        ...res.data.assigned,
-        ...res.data.rejected,
+        ...(res.data.applied || []),
+        ...(res.data.assigned || []),
+        ...(res.data.rejected || []),
       ];
 
-      const exists = allApplications.find((app) => app.task._id === id);
+      const exists = allApplications.find((app) => app.task?._id === id);
 
       if (exists) setApplied(true);
     } catch (err) {
@@ -91,19 +92,16 @@ function TaskDetails() {
       <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-10">
         {/* MAIN CONTENT */}
         <div className="md:col-span-2 bg-white rounded-xl shadow-md p-8">
-          {/* TITLE */}
           <h1 className="text-3xl font-bold text-blue-900 mb-4">
             {task.title}
           </h1>
 
-          {/* BUDGET */}
           <div className="mb-6">
             <span className="px-4 py-2 bg-green-100 text-green-700 rounded-full font-semibold text-sm">
               ৳ {task.budgetAmount}
             </span>
           </div>
 
-          {/* DESCRIPTION */}
           <div>
             <h2 className="text-lg font-semibold text-blue-900 mb-3">
               Description
@@ -111,7 +109,6 @@ function TaskDetails() {
             <p className="text-gray-700 leading-relaxed">{task.description}</p>
           </div>
 
-          {/* MESSAGE */}
           {message && (
             <div className="mt-6 bg-blue-50 border border-blue-200 text-blue-700 p-4 rounded-lg text-sm">
               {message}
@@ -119,7 +116,7 @@ function TaskDetails() {
           )}
         </div>
 
-        {/* SIDEBAR PANEL */}
+        {/* SIDEBAR */}
         <div className="bg-white rounded-xl shadow-md p-8 h-fit sticky top-28">
           <h2 className="text-lg font-semibold text-blue-900 mb-6">
             Task Summary
@@ -143,6 +140,7 @@ function TaskDetails() {
             {task.skills && task.skills.length > 0 && (
               <div>
                 <p className="text-gray-500 text-sm mb-2">Required Skills</p>
+
                 <div className="flex flex-wrap gap-2">
                   {task.skills.map((skill, index) => (
                     <span
@@ -157,7 +155,6 @@ function TaskDetails() {
             )}
           </div>
 
-          {/* APPLY BUTTON */}
           {user?.user?.role === "freelancer" && (
             <button
               onClick={handleApply}

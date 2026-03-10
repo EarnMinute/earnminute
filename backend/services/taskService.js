@@ -1,6 +1,7 @@
 const taskRepository = require("../repositories/taskRepository");
 const Application = require("../models/Application");
 const Task = require("../models/Task");
+const notificationService = require("./notificationService");
 
 /* ===============================
    CREATE TASK
@@ -14,6 +15,20 @@ const createTask = async (employerId, data) => {
     isDeleted: false,
     isRated: false
   });
+
+  /* ===============================
+     NOTIFY ADMINS
+  ================================ */
+  const admins = await require("../models/User").find({ role: "admin" });
+
+  for (const admin of admins) {
+    await notificationService.createNotification({
+      user: admin._id,
+      type: "task_created",
+      message: `A new task "${task.title}" has been posted`,
+      link: `/task/${task._id}`
+    });
+  }
 
   return task;
 };
@@ -55,6 +70,22 @@ const getAllTasks = async (queryParams) => {
     totalTasks: tasks.length,
     tasks: paginatedTasks
   };
+
+};
+
+
+/* ===============================
+   GET SINGLE TASK
+================================ */
+const getTaskById = async (taskId) => {
+
+  const task = await taskRepository.getTaskById(taskId);
+
+  if (!task) {
+    throw new Error("Task not found");
+  }
+
+  return task;
 
 };
 
@@ -100,6 +131,18 @@ const completeTask = async (taskId) => {
 
   await taskRepository.saveTask(task);
 
+  /* ===============================
+     NOTIFY FREELANCER
+  ================================ */
+  if (task.assignedFreelancer) {
+    await notificationService.createNotification({
+  user: task.assignedFreelancer,
+  type: "task_completed",
+  message: `Task "${task.title}" has been marked as completed`,
+  link: `/task/${task._id}`
+});
+  }
+
   return task;
 };
 
@@ -129,6 +172,47 @@ const rateFreelancer = async (taskId, employerId, rating, review) => {
   task.review = review;
 
   await taskRepository.saveTask(task);
+
+  /* ===============================
+     UPDATE FREELANCER RATING
+  ================================ */
+
+  const User = require("../models/User");
+
+  const freelancerId = task.assignedFreelancer;
+
+  const ratedTasks = await Task.find({
+    assignedFreelancer: freelancerId,
+    isRated: true
+  });
+
+  const totalReviews = ratedTasks.length;
+
+  const totalRating = ratedTasks.reduce((sum, t) => sum + t.rating, 0);
+
+  const average = totalReviews > 0
+    ? (totalRating / totalReviews).toFixed(1)
+    : 0;
+
+  await User.findByIdAndUpdate(freelancerId, {
+    rating: {
+      average,
+      count: totalReviews
+    }
+  });
+
+  /* ===============================
+     NOTIFY FREELANCER
+  ================================ */
+
+  if (task.assignedFreelancer) {
+    await notificationService.createNotification({
+      user: task.assignedFreelancer,
+      type: "rating_received",
+      message: `You received a rating for task "${task.title}"`,
+      link: `/task/${task._id}`
+    });
+  }
 
   return task;
 };
@@ -261,6 +345,7 @@ const deleteTask = async (taskId) => {
 module.exports = {
   createTask,
   getAllTasks,
+  getTaskById,
   getEmployerDashboard,
   completeTask,
   rateFreelancer,

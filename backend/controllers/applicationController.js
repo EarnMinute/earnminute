@@ -1,6 +1,8 @@
 const Application = require("../models/Application");
 const Task = require("../models/Task");
 const User = require("../models/User");
+const applicationService = require("../services/applicationService");
+const notificationService = require("../services/notificationService");
 
 /* ===============================
    APPLY TO TASK
@@ -16,26 +18,10 @@ exports.applyToTask = async (req, res) => {
       return res.status(400).json({ message: "Task not available" });
     }
 
-    // 🔐 Prevent duplicate application
-    const existingApplication = await Application.findOne({
-      task: taskId,
-      freelancer: freelancerId,
-    });
-
-    if (existingApplication) {
-      return res.status(400).json({
-        message: "You have already applied to this task",
-      });
-    }
-
-    const application = await Application.create({
-      task: taskId,
-      freelancer: freelancerId,
-      status: "applied",
-    });
-
-    task.applicationsCount = (task.applicationsCount || 0) + 1;
-    await task.save();
+    const application = await applicationService.applyToTask(
+      taskId,
+      freelancerId
+    );
 
     res.status(201).json({
       message: "Applied successfully",
@@ -43,7 +29,7 @@ exports.applyToTask = async (req, res) => {
     });
 
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(400).json({ message: error.message });
   }
 };
 
@@ -73,7 +59,11 @@ exports.assignFreelancer = async (req, res) => {
 
     const task = await Task.findById(taskId);
 
-    if (!task || task.status !== "open") {
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    if (task.status === "assigned") {
       return res.status(400).json({ message: "Task already assigned" });
     }
 
@@ -90,13 +80,42 @@ exports.assignFreelancer = async (req, res) => {
     selectedApplication.status = "assigned";
     await selectedApplication.save();
 
-    // Reject all others
     await Application.updateMany(
       { task: taskId, _id: { $ne: applicationId } },
       { status: "rejected" }
     );
 
+    /* ===============================
+       NOTIFY ASSIGNED FREELANCER
+    ================================ */
+    const notificationService = require("../services/notificationService");
+
+    await notificationService.createNotification({
+      user: selectedApplication.freelancer,
+      type: "task_assigned",
+      message: `You have been assigned to task "${task.title}"`,
+      link: `/task/${taskId}`,
+    });
+
+    /* ===============================
+       NOTIFY REJECTED FREELANCERS
+    ================================ */
+    const rejectedApplications = await Application.find({
+      task: taskId,
+      status: "rejected",
+    });
+
+    for (const app of rejectedApplications) {
+      await notificationService.createNotification({
+        user: app.freelancer,
+        type: "application_rejected",
+        message: `Your application was not selected for task "${task.title}"`,
+        link: `/task/${taskId}`,
+      });
+    }
+
     res.status(200).json({
+      success: true,
       message: "Freelancer assigned successfully",
     });
 
@@ -162,6 +181,7 @@ exports.getFreelancerDashboard = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 /* ===============================
    ADMIN: GET ALL APPLICATIONS
 ================================= */

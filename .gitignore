@@ -28,3 +28,8 @@ diagnostic.data/
 _tmp/
 
 .env.local
+
+# Local development / AI analysis files
+exportCodebase.js
+AI_CODEBASE.txt
+Project details.txt

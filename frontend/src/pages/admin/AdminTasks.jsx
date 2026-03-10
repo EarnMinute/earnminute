@@ -12,7 +12,14 @@ function AdminTasks() {
 
   const fetchTasks = async () => {
     const res = await API.get("/tasks/admin/all");
-    return res.data;
+
+    // Normalize response
+    const data = res.data?.data;
+
+    if (Array.isArray(data)) return data;
+    if (data?.tasks) return data.tasks;
+
+    return [];
   };
 
   const { data: tasks = [], isLoading } = useQuery({

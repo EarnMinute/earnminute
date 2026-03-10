@@ -47,6 +47,34 @@ const getAllTasks = async (req, res) => {
 
 };
 
+
+/* ===============================
+   GET SINGLE TASK
+================================ */
+const getTaskById = async (req, res) => {
+
+  try {
+
+    const task = await taskService.getTaskById(req.params.id);
+
+    res.json({
+      success: true,
+      task
+    });
+
+  } catch (error) {
+
+    res.status(404).json({
+      success: false,
+      message: error.message
+    });
+
+  }
+
+};
+
+
+
 /* ===============================
    EMPLOYER DASHBOARD
 ================================ */
@@ -184,6 +212,7 @@ const deleteTask = async (req, res) => {
 module.exports = {
   createTask,
   getAllTasks,
+  getTaskById,
   getEmployerDashboard,
   completeTask,
   rateFreelancer,

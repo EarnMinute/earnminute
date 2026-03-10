@@ -4,44 +4,34 @@ const Task = require("../models/Task");
    CREATE TASK
 ================================ */
 const createTask = async (data) => {
-  return Task.create(data);
+  return await Task.create(data);
 };
 
 /* ===============================
-   FIND TASK BY ID
-================================ */
-const findById = async (id) => {
-  return Task.findById(id);
-};
-
-/* ===============================
-   GET ALL PUBLIC TASKS
+   GET ALL OPEN TASKS
 ================================ */
 const getAllOpenTasks = async () => {
-  return Task.find({
+  return await Task.find({
     status: "open",
-    isDeleted: { $ne: true },
+    isDeleted: false,
   }).sort({ createdAt: -1 });
 };
 
 /* ===============================
-   SEARCH TASKS (NEW FEATURE)
+   SEARCH TASKS
 ================================ */
 const searchTasks = async (filters) => {
   const query = {
     status: "open",
-    isDeleted: { $ne: true },
+    isDeleted: false,
   };
 
   if (filters.search) {
-    query.$or = [
-      { title: { $regex: filters.search, $options: "i" } },
-      { description: { $regex: filters.search, $options: "i" } },
-    ];
+    query.title = { $regex: filters.search, $options: "i" };
   }
 
   if (filters.skill) {
-    query.skills = { $in: [filters.skill] };
+    query.skills = { $regex: filters.skill, $options: "i" };
   }
 
   if (filters.minBudget || filters.maxBudget) {
@@ -56,56 +46,61 @@ const searchTasks = async (filters) => {
     }
   }
 
-  return Task.find(query).sort({ createdAt: -1 });
+  return await Task.find(query).sort({ createdAt: -1 });
+};
+
+/* ===============================
+   GET TASK BY ID
+================================ */
+const getTaskById = async (taskId) => {
+  return await Task.findOne({
+    _id: taskId,
+    isDeleted: false,
+  }).populate("employer", "name rating");
 };
 
 /* ===============================
    GET EMPLOYER TASKS
 ================================ */
 const getEmployerTasks = async (employerId) => {
-  return Task.find({
+  return await Task.find({
     employer: employerId,
-    isDeleted: { $ne: true },
+    isDeleted: false,
   })
     .populate("assignedFreelancer", "name rating")
     .sort({ createdAt: -1 });
 };
 
 /* ===============================
-   SAVE TASK
+   FIND TASK
 ================================ */
-const saveTask = async (task) => {
-  return task.save();
+const findById = async (id) => {
+  return await Task.findById(id);
 };
 
 /* ===============================
-   GET ADMIN TASKS
+   SAVE TASK
 ================================ */
-const getAllTasksAdmin = async () => {
-  return Task.find({ isDeleted: { $ne: true } })
-    .populate("employer", "name email")
-    .populate("assignedFreelancer", "name rating")
-    .sort({ createdAt: -1 });
+const saveTask = async (task) => {
+  return await task.save();
 };
 
 /* ===============================
    INCREMENT APPLICATION COUNT
 ================================ */
 const incrementApplicationsCount = async (taskId) => {
-  return Task.findByIdAndUpdate(
-    taskId,
-    { $inc: { applicationsCount: 1 } },
-    { new: true }
-  );
+  return await Task.findByIdAndUpdate(taskId, {
+    $inc: { applicationsCount: 1 },
+  });
 };
 
 module.exports = {
   createTask,
-  findById,
   getAllOpenTasks,
   searchTasks,
+  getTaskById,
   getEmployerTasks,
+  findById,
   saveTask,
-  getAllTasksAdmin,
-  incrementApplicationsCount
+  incrementApplicationsCount,
 };

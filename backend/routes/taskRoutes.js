@@ -4,6 +4,7 @@ const router = express.Router();
 const {
   createTask,
   getAllTasks,
+  getTaskById,
   getEmployerDashboard,
   completeTask,
   rateFreelancer,
@@ -28,6 +29,8 @@ Supports filters:
 ?page=
 */
 router.get("/", getAllTasks);
+
+router.get("/:id", getTaskById);
 
 
 /* ===============================

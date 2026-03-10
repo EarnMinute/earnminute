@@ -3,8 +3,6 @@ import API from "../../services/api";
 import { Link } from "react-router-dom";
 
 function FreelancerDashboard() {
-  const [freelancer, setFreelancer] = useState({});
-
   const [dashboard, setDashboard] = useState({
     applied: [],
     assigned: [],
@@ -13,6 +11,7 @@ function FreelancerDashboard() {
   });
 
   const [activeTab, setActiveTab] = useState("applied");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchDashboard();
@@ -20,9 +19,9 @@ function FreelancerDashboard() {
 
   const fetchDashboard = async () => {
     try {
-      const res = await API.get("/applications/freelancer/dashboard");
+      setLoading(true);
 
-      setFreelancer(res.data.freelancer || {});
+      const res = await API.get("/applications/freelancer/dashboard");
 
       setDashboard({
         applied: res.data.applied || [],
@@ -32,6 +31,8 @@ function FreelancerDashboard() {
       });
     } catch (error) {
       console.error("Freelancer dashboard error:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -100,33 +101,41 @@ function FreelancerDashboard() {
       <div className="flex-1 p-10">
         <h1 className="text-2xl font-bold mb-6">Freelancer Dashboard</h1>
 
-        {activeTab === "applied" &&
-          renderTasks(
-            dashboard.applied,
-            "bg-yellow-100 text-yellow-700",
-            "Applied",
-          )}
+        {loading && (
+          <p className="text-gray-500 text-sm">Loading dashboard...</p>
+        )}
 
-        {activeTab === "assigned" &&
-          renderTasks(
-            dashboard.assigned,
-            "bg-green-100 text-green-700",
-            "Assigned",
-          )}
+        {!loading && (
+          <>
+            {activeTab === "applied" &&
+              renderTasks(
+                dashboard.applied,
+                "bg-yellow-100 text-yellow-700",
+                "Applied",
+              )}
 
-        {activeTab === "completed" &&
-          renderTasks(
-            dashboard.completed,
-            "bg-blue-100 text-blue-700",
-            "Completed",
-          )}
+            {activeTab === "assigned" &&
+              renderTasks(
+                dashboard.assigned,
+                "bg-green-100 text-green-700",
+                "Assigned",
+              )}
 
-        {activeTab === "rejected" &&
-          renderTasks(
-            dashboard.rejected,
-            "bg-red-100 text-red-700",
-            "Rejected",
-          )}
+            {activeTab === "completed" &&
+              renderTasks(
+                dashboard.completed,
+                "bg-blue-100 text-blue-700",
+                "Completed",
+              )}
+
+            {activeTab === "rejected" &&
+              renderTasks(
+                dashboard.rejected,
+                "bg-red-100 text-red-700",
+                "Rejected",
+              )}
+          </>
+        )}
 
         <div className="mt-12 text-center">
           <Link

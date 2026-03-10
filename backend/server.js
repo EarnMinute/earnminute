@@ -7,7 +7,7 @@ const rateLimit = require("express-rate-limit");
 const mongoSanitize = require("express-mongo-sanitize");
 const { applicationLimiter } = require("./middleware/abuseLimiter");
 const morgan = require("morgan");
-const userRoutes = require("./routes/userRoutes");
+
 
 dotenv.config();
 
@@ -113,6 +113,8 @@ const authRoutes = require("./routes/authRoutes");
 const taskRoutes = require("./routes/taskRoutes");
 const applicationRoutes = require("./routes/applicationRoutes");
 const analyticsRoutes = require("./routes/analyticsRoutes");
+const userRoutes = require("./routes/userRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
 
 app.get("/", (req, res) => {
   res.send("EarnMinute API Secure 🚀");
@@ -126,6 +128,7 @@ app.use("/api/v1/tasks", taskRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/applications", applicationLimiter, applicationRoutes);
 app.use("/api/v1/analytics", analyticsRoutes);
+app.use("/api/v1/notifications", notificationRoutes);
 
 /* ===============================
    CENTRAL ERROR HANDLER

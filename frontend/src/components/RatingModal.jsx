@@ -17,8 +17,8 @@ function RatingModal({ taskId, onClose, onSuccess }) {
       setLoading(true);
       setMessage("");
 
-      await API.patch(`/tasks/${taskId}/rate`, {
-        rating,
+      await API.post(`/tasks/${taskId}/rate`, {
+        rating: Number(rating),
         review,
       });
 
@@ -27,10 +27,10 @@ function RatingModal({ taskId, onClose, onSuccess }) {
       setTimeout(() => {
         onSuccess();
         onClose();
-      }, 800);
+      }, 700);
     } catch (error) {
       console.error("Rating error:", error);
-      setMessage("Failed to submit rating.");
+      setMessage(error?.response?.data?.message || "Failed to submit rating.");
     } finally {
       setLoading(false);
     }
@@ -38,14 +38,11 @@ function RatingModal({ taskId, onClose, onSuccess }) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-6">
-      {/* MODAL */}
       <div className="bg-white rounded-xl shadow-lg w-full max-w-md p-8">
-        {/* TITLE */}
         <h2 className="text-xl font-semibold text-blue-900 mb-6">
           Rate Freelancer
         </h2>
 
-        {/* STAR RATING */}
         <div className="mb-6 text-center">
           <p className="text-sm text-gray-500 mb-2">Select Rating</p>
 
@@ -64,7 +61,6 @@ function RatingModal({ taskId, onClose, onSuccess }) {
           </div>
         </div>
 
-        {/* REVIEW */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-600 mb-2">
             Review (optional)
@@ -79,12 +75,10 @@ function RatingModal({ taskId, onClose, onSuccess }) {
           />
         </div>
 
-        {/* MESSAGE */}
         {message && (
           <p className="text-sm text-center text-blue-700 mb-4">{message}</p>
         )}
 
-        {/* ACTIONS */}
         <div className="flex justify-end gap-3">
           <button
             onClick={onClose}

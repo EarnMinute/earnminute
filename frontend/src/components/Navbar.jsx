@@ -1,10 +1,16 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useEffect, useState } from "react";
+import API from "../services/api";
 
 function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -25,6 +31,53 @@ function Navbar() {
 
   const isEmployerPage = location.pathname.startsWith("/employers");
   const isFreelancerPage = location.pathname.startsWith("/freelancers");
+
+  /* ===============================
+     FETCH NOTIFICATIONS
+  ================================ */
+  const fetchNotifications = async () => {
+    try {
+      const res = await API.get("/notifications");
+
+      setNotifications(res.data.notifications || []);
+      setUnreadCount(res.data.unreadCount || 0);
+    } catch (error) {
+      console.error("Notification fetch error:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchNotifications();
+
+      const interval = setInterval(() => {
+        fetchNotifications();
+      }, 30000);
+
+      return () => clearInterval(interval);
+    }
+  }, [user]);
+
+  /* ===============================
+     MARK AS READ
+  ================================ */
+  const handleRead = async (id) => {
+    try {
+      await API.patch(`/notifications/${id}/read`);
+      fetchNotifications();
+    } catch (error) {
+      console.error("Notification read error:", error);
+    }
+  };
+
+  const handleMarkAll = async () => {
+    try {
+      await API.patch("/notifications/read-all");
+      fetchNotifications();
+    } catch (error) {
+      console.error("Mark all read error:", error);
+    }
+  };
 
   return (
     <nav className="bg-white border-b shadow-sm">
@@ -65,6 +118,68 @@ function Navbar() {
                 >
                   Dashboard
                 </Link>
+
+                {/* ===============================
+                    NOTIFICATION BELL
+                ================================ */}
+                <div className="relative">
+                  <button
+                    onClick={() => setShowNotifications(!showNotifications)}
+                    className="relative text-xl"
+                  >
+                    🔔
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </button>
+
+                  {showNotifications && (
+                    <div className="absolute right-0 mt-3 w-80 bg-white border rounded-xl shadow-lg z-50">
+                      <div className="flex justify-between items-center px-4 py-3 border-b">
+                        <span className="font-semibold">Notifications</span>
+
+                        {unreadCount > 0 && (
+                          <button
+                            onClick={handleMarkAll}
+                            className="text-sm text-blue-600"
+                          >
+                            Mark all read
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="max-h-80 overflow-y-auto">
+                        {notifications.length === 0 && (
+                          <p className="p-4 text-gray-500 text-sm">
+                            No notifications
+                          </p>
+                        )}
+
+                        {notifications.map((n) => (
+                          <div
+                            key={n._id}
+                            onClick={() => {
+                              handleRead(n._id);
+                              setShowNotifications(false);
+                              if (n.link) navigate(n.link);
+                            }}
+                            className={`p-4 border-b cursor-pointer hover:bg-gray-50 ${
+                              !n.isRead ? "bg-blue-50" : ""
+                            }`}
+                          >
+                            <p className="text-sm">{n.message}</p>
+
+                            <p className="text-xs text-gray-400 mt-1">
+                              {new Date(n.createdAt).toLocaleString()}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 {/* User Badge */}
                 <div className="flex items-center gap-3">
