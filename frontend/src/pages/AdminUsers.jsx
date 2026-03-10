@@ -1,27 +1,25 @@
-import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import API from "../services/api";
 import AdminLayout from "../components/AdminLayout";
 
 function AdminUsers() {
-  const [users, setUsers] = useState([]);
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  const queryClient = useQueryClient();
 
   const fetchUsers = async () => {
-    try {
-      const res = await API.get("/users/admin/all");
-      setUsers(res.data);
-    } catch (error) {
-      console.error("Failed to load users", error);
-    }
+    const res = await API.get("/users/admin/all");
+    return res.data;
   };
+
+  const { data: users = [], isLoading } = useQuery({
+    queryKey: ["adminUsers"],
+    queryFn: fetchUsers,
+  });
 
   const changeRole = async (id, role) => {
     try {
       await API.patch(`/users/admin/role/${id}`, { role });
-      fetchUsers();
+
+      queryClient.invalidateQueries(["adminUsers"]);
     } catch (error) {
       console.error("Role update failed", error);
     }
@@ -34,11 +32,20 @@ function AdminUsers() {
 
     try {
       await API.delete(`/users/admin/${id}`);
-      fetchUsers();
+
+      queryClient.invalidateQueries(["adminUsers"]);
     } catch (error) {
       console.error("User delete failed", error);
     }
   };
+
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <p className="text-center mt-10">Loading users...</p>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>

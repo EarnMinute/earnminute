@@ -30,6 +30,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["freelancer", "employer", "admin"],
       required: true,
+      index: true,
     },
 
     loginAttempts: {
@@ -47,6 +48,11 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+/* ===============================
+   INDEXES
+================================ */
+userSchema.index({ createdAt: -1 });
 
 /* ===============================
    ACCOUNT LOCK LOGIC

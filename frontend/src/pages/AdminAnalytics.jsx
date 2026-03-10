@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import API from "../services/api";
 import AdminLayout from "../components/AdminLayout";
 import {
@@ -14,41 +14,25 @@ import {
 } from "recharts";
 
 function AdminAnalytics() {
-  const [chartData, setChartData] = useState([]);
+  const fetchCharts = async () => {
+    const res = await API.get("/analytics/admin-charts");
+    return res.data;
+  };
 
-  const [stats, setStats] = useState({
-    totalUsers: 0,
-    totalFreelancers: 0,
-    totalEmployers: 0,
-    totalTasks: 0,
-    totalApplications: 0,
-    activeToday: 0,
+  const { data: chartData = [], isLoading } = useQuery({
+    queryKey: ["adminCharts"],
+    queryFn: fetchCharts,
+    staleTime: 1000 * 60 * 10,
+    refetchOnMount: false,
   });
 
-  useEffect(() => {
-    fetchStats();
-    fetchCharts();
-  }, []);
-
-  const fetchStats = async () => {
-    try {
-      const res = await API.get("/analytics/admin-dashboard");
-
-      setStats(res.data);
-    } catch (error) {
-      console.error("Stats error", error);
-    }
-  };
-
-  const fetchCharts = async () => {
-    try {
-      const res = await API.get("/analytics/admin-charts");
-
-      setChartData(res.data);
-    } catch (error) {
-      console.error("Charts error", error);
-    }
-  };
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <p className="text-center mt-10">Loading analytics...</p>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
@@ -63,17 +47,6 @@ function AdminAnalytics() {
           </p>
         </div>
 
-        {/* SUMMARY CARDS */}
-
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6 mb-12">
-          <StatCard label="Users" value={stats.totalUsers} />
-          <StatCard label="Freelancers" value={stats.totalFreelancers} />
-          <StatCard label="Employers" value={stats.totalEmployers} />
-          <StatCard label="Tasks" value={stats.totalTasks} />
-          <StatCard label="Applications" value={stats.totalApplications} />
-          <StatCard label="Active Today" value={stats.activeToday} />
-        </div>
-
         {/* TRAFFIC CHART */}
 
         <div className="bg-white rounded-xl shadow-md p-6 mb-10">
@@ -82,11 +55,8 @@ function AdminAnalytics() {
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
-
               <XAxis dataKey="date" />
-
               <YAxis />
-
               <Tooltip />
 
               <Line
@@ -121,11 +91,8 @@ function AdminAnalytics() {
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
-
               <XAxis dataKey="date" />
-
               <YAxis />
-
               <Tooltip />
 
               <Bar dataKey="tasks" fill="#f97316" />
@@ -134,16 +101,6 @@ function AdminAnalytics() {
         </div>
       </div>
     </AdminLayout>
-  );
-}
-
-function StatCard({ label, value }) {
-  return (
-    <div className="bg-white rounded-xl shadow-md p-6">
-      <p className="text-sm text-gray-500">{label}</p>
-
-      <p className="text-2xl font-bold mt-1 text-blue-900">{value}</p>
-    </div>
   );
 }
 

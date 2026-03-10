@@ -3,6 +3,8 @@ const User = require("../models/User");
 const Application = require("../models/Application");
 const Analytics = require("../models/Analytics");
 
+const analyticsService = require("../services/analyticsService");
+
 /* ===============================
    PUBLIC HOMEPAGE STATS
 ================================ */
@@ -29,22 +31,20 @@ exports.getPublicAnalytics = async (req, res) => {
     });
 
   } catch (error) {
+
     res.status(500).json({
       message: "Analytics error",
       error: error.message,
     });
+
   }
 };
 
 /* ===============================
-   ADMIN DASHBOARD + CHART ANALYTICS
+   ADMIN DASHBOARD ANALYTICS
 ================================ */
 exports.getAdminDashboardAnalytics = async (req, res) => {
   try {
-
-    /* ===============================
-       PLATFORM COUNTS
-    ================================= */
 
     const totalUsers = await User.countDocuments();
 
@@ -62,19 +62,11 @@ exports.getAdminDashboardAnalytics = async (req, res) => {
 
     const totalApplications = await Application.countDocuments();
 
-    /* ===============================
-       ACTIVE TODAY
-    ================================= */
-
     const today = new Date().toISOString().split("T")[0];
 
     const todayAnalytics = await Analytics.findOne({ date: today });
 
     const activeToday = todayAnalytics ? todayAnalytics.logins : 0;
-
-    /* ===============================
-       RECENT DATA
-    ================================= */
 
     const recentUsers = await User.find()
       .sort({ createdAt: -1 })
@@ -88,17 +80,34 @@ exports.getAdminDashboardAnalytics = async (req, res) => {
       .limit(5)
       .populate("employer", "name");
 
-    /* ===============================
-       TRAFFIC CHART DATA
-    ================================= */
+    res.status(200).json({
+      totalUsers,
+      totalFreelancers,
+      totalEmployers,
+      totalTasks,
+      totalApplications,
+      activeToday,
+      recentUsers,
+      recentTasks,
+    });
 
-    const analyticsHistory = await Analytics.find()
-      .sort({ date: 1 })
-      .limit(30);
+  } catch (error) {
 
-    /* ===============================
-       TASKS PER DAY
-    ================================= */
+    res.status(500).json({
+      message: "Admin analytics error",
+      error: error.message,
+    });
+
+  }
+};
+
+/* ===============================
+   ADMIN CHART DATA ONLY
+================================ */
+exports.getAdminCharts = async (req, res) => {
+  try {
+
+    const analyticsHistory = await Analytics.find();
 
     const tasksPerDay = await Task.aggregate([
       {
@@ -114,49 +123,48 @@ exports.getAdminDashboardAnalytics = async (req, res) => {
           },
           tasks: { $sum: 1 }
         }
-      },
-      { $sort: { _id: 1 } },
-      { $limit: 30 }
+      }
     ]);
 
-    /* ===============================
-       MERGE DATA FOR CHARTS
-    ================================= */
+    const historyMap = new Map();
 
-    const chartData = analyticsHistory.map(day => {
-
-      const taskDay = tasksPerDay.find(t => t._id === day.date);
-
-      return {
-        date: day.date,
-        visits: day.visits || 0,
-        registrations: day.registrations || 0,
-        logins: day.logins || 0,
-        tasks: taskDay ? taskDay.tasks : 0
-      };
-
+    analyticsHistory.forEach(day => {
+      historyMap.set(day.date, day);
     });
 
-    /* ===============================
-       FINAL RESPONSE
-    ================================= */
+    const taskMap = new Map();
 
-    res.status(200).json({
-      totalUsers,
-      totalFreelancers,
-      totalEmployers,
-      totalTasks,
-      totalApplications,
-      activeToday,
-      recentUsers,
-      recentTasks,
-      chartData
+    tasksPerDay.forEach(t => {
+      taskMap.set(t._id, t.tasks);
     });
+
+    const chartData = [];
+
+    for (let i = 29; i >= 0; i--) {
+
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+
+      const date = d.toISOString().split("T")[0];
+
+      const analytics = historyMap.get(date);
+
+      chartData.push({
+        date,
+        visits: analytics ? analytics.visits : 0,
+        registrations: analytics ? analytics.registrations : 0,
+        logins: analytics ? analytics.logins : 0,
+        tasks: taskMap.get(date) || 0
+      });
+
+    }
+
+    res.status(200).json(chartData);
 
   } catch (error) {
 
     res.status(500).json({
-      message: "Admin analytics error",
+      message: "Admin charts error",
       error: error.message,
     });
 
@@ -164,46 +172,26 @@ exports.getAdminDashboardAnalytics = async (req, res) => {
 };
 
 /* ===============================
-   INCREMENT VISIT
+   TRACK VISIT (1 PER IP / DAY)
 ================================ */
-exports.incrementVisit = async () => {
+exports.trackVisit = async (req, res) => {
 
-  const today = new Date().toISOString().split("T")[0];
+  try {
 
-  await Analytics.findOneAndUpdate(
-    { date: today },
-    { $inc: { visits: 1 } },
-    { upsert: true, new: true }
-  );
+    const ip =
+      req.headers["x-forwarded-for"] ||
+      req.socket.remoteAddress ||
+      "unknown";
 
-};
+    await analyticsService.incrementVisit(ip);
 
-/* ===============================
-   INCREMENT REGISTRATION
-================================ */
-exports.incrementRegistration = async () => {
+    res.status(200).json({ success: true });
 
-  const today = new Date().toISOString().split("T")[0];
+  } catch (error) {
 
-  await Analytics.findOneAndUpdate(
-    { date: today },
-    { $inc: { registrations: 1 } },
-    { upsert: true, new: true }
-  );
+    res.status(500).json({
+      message: "Visit tracking error",
+    });
 
-};
-
-/* ===============================
-   INCREMENT LOGIN
-================================ */
-exports.incrementLogin = async () => {
-
-  const today = new Date().toISOString().split("T")[0];
-
-  await Analytics.findOneAndUpdate(
-    { date: today },
-    { $inc: { logins: 1 } },
-    { upsert: true, new: true }
-  );
-
+  }
 };

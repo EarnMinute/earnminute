@@ -6,15 +6,19 @@ const analyticsSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
+      index: true,
     },
+
     visits: {
       type: Number,
       default: 0,
     },
+
     registrations: {
       type: Number,
       default: 0,
     },
+
     logins: {
       type: Number,
       default: 0,

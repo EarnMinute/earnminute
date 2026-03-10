@@ -1,32 +1,32 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import API from "../services/api";
 import AdminLayout from "../components/AdminLayout";
 
 function AdminTasks() {
-  const [tasks, setTasks] = useState([]);
   const [activeTab, setActiveTab] = useState("all");
   const [selectedTask, setSelectedTask] = useState(null);
 
-  useEffect(() => {
-    fetchTasks();
-  }, []);
+  const queryClient = useQueryClient();
 
   const fetchTasks = async () => {
-    try {
-      const res = await API.get("/tasks/admin/all");
-      setTasks(res.data);
-    } catch (error) {
-      console.error("Failed to load tasks", error);
-    }
+    const res = await API.get("/tasks/admin/all");
+    return res.data;
   };
+
+  const { data: tasks = [], isLoading } = useQuery({
+    queryKey: ["adminTasks"],
+    queryFn: fetchTasks,
+  });
 
   const deleteTask = async (id) => {
     if (!window.confirm("Delete this task?")) return;
 
     try {
       await API.delete(`/tasks/admin/${id}`);
-      fetchTasks();
+
+      queryClient.invalidateQueries(["adminTasks"]);
     } catch (error) {
       console.error("Delete failed", error);
     }
@@ -36,6 +36,14 @@ function AdminTasks() {
     activeTab === "all"
       ? tasks
       : tasks.filter((task) => task.status === activeTab);
+
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <p className="text-center mt-10">Loading tasks...</p>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
@@ -132,7 +140,6 @@ function AdminTasks() {
               <div className="space-y-3 max-h-80 overflow-y-auto">
                 {selectedTask.applications
                   ?.filter((app) => {
-                    // Only show assigned freelancer for completed tasks
                     if (selectedTask.status === "completed") {
                       return app.status === "assigned";
                     }

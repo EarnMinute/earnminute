@@ -1,57 +1,57 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import API from "../services/api";
 import AdminLayout from "../components/AdminLayout";
 
 function AdminDashboard() {
-  const [stats, setStats] = useState({
-    totalUsers: 0,
-    totalFreelancers: 0,
-    totalEmployers: 0,
-    totalTasks: 0,
-    totalApplications: 0,
-    activeToday: 0,
+  const fetchAdminAnalytics = async () => {
+    const res = await API.get("/analytics/admin-dashboard");
+    return res.data;
+  };
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["adminDashboard"],
+    queryFn: fetchAdminAnalytics,
   });
 
-  const [recentUsers, setRecentUsers] = useState([]);
-  const [recentTasks, setRecentTasks] = useState([]);
+  const stats = data
+    ? {
+        totalUsers: data.totalUsers,
+        totalFreelancers: data.totalFreelancers,
+        totalEmployers: data.totalEmployers,
+        totalTasks: data.totalTasks,
+        totalApplications: data.totalApplications,
+        activeToday: data.activeToday,
+      }
+    : {
+        totalUsers: 0,
+        totalFreelancers: 0,
+        totalEmployers: 0,
+        totalTasks: 0,
+        totalApplications: 0,
+        activeToday: 0,
+      };
 
-  useEffect(() => {
-    fetchAdminAnalytics();
-  }, []);
+  const recentUsers = data?.recentUsers || [];
+  const recentTasks = data?.recentTasks || [];
 
-  const fetchAdminAnalytics = async () => {
-    try {
-      const res = await API.get("/analytics/admin-dashboard");
-
-      setStats({
-        totalUsers: res.data.totalUsers,
-        totalFreelancers: res.data.totalFreelancers,
-        totalEmployers: res.data.totalEmployers,
-        totalTasks: res.data.totalTasks,
-        totalApplications: res.data.totalApplications,
-        activeToday: res.data.activeToday,
-      });
-
-      setRecentUsers(res.data.recentUsers);
-      setRecentTasks(res.data.recentTasks);
-    } catch (error) {
-      console.error("Admin analytics error", error);
-    }
-  };
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <p className="text-center mt-10">Loading dashboard...</p>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
       <div className="max-w-7xl mx-auto">
-        {/* HEADER */}
         <div className="mb-10">
           <h1 className="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
-
           <p className="text-gray-500 mt-2">
             Platform overview and marketplace statistics.
           </p>
         </div>
 
-        {/* STATS */}
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6">
           <StatCard
             label="Total Users"
@@ -85,7 +85,6 @@ function AdminDashboard() {
           />
         </div>
 
-        {/* RECENT USERS */}
         <div className="mt-12 bg-white rounded-xl shadow-md p-6">
           <h2 className="text-lg font-semibold text-gray-800 mb-6">
             Recent Users
@@ -114,7 +113,6 @@ function AdminDashboard() {
           </table>
         </div>
 
-        {/* RECENT TASKS */}
         <div className="mt-10 bg-white rounded-xl shadow-md p-6">
           <h2 className="text-lg font-semibold text-gray-800 mb-6">
             Recent Tasks

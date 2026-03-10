@@ -1,6 +1,12 @@
 import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import API from "../services/api";
 
 function RoleSelectionPage() {
+  useEffect(() => {
+    API.post("/analytics/visit").catch(() => {});
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center">
       {/* ===== HERO / INTRO ===== */}

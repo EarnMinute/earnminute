@@ -24,11 +24,35 @@ exports.getFreelancerProfile = async (req, res) => {
 ================================== */
 exports.getAllUsersAdmin = async (req, res) => {
   try {
+
+    const page = req.query.page ? Number(req.query.page) : null;
+
+    if (!page) {
+      const users = await User.find()
+        .sort({ createdAt: -1 })
+        .select("name email role createdAt");
+
+      return res.json(users);
+    }
+
+    const limit = 20;
+    const skip = (page - 1) * limit;
+
     const users = await User.find()
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .select("name email role createdAt");
 
-    res.json(users);
+    const totalUsers = await User.countDocuments();
+
+    res.json({
+      page,
+      totalPages: Math.ceil(totalUsers / limit),
+      totalUsers,
+      users
+    });
+
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch users" });
   }

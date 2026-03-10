@@ -8,7 +8,6 @@ const mongoSanitize = require("express-mongo-sanitize");
 const { applicationLimiter } = require("./middleware/abuseLimiter");
 const morgan = require("morgan");
 const userRoutes = require("./routes/userRoutes");
-const { incrementVisit } = require("./controllers/analyticsController");
 
 dotenv.config();
 
@@ -16,6 +15,9 @@ mongoose.set("strictQuery", true);
 
 const app = express();
 
+/* ===============================
+   LOGGING
+================================ */
 if (process.env.NODE_ENV !== "production") {
   app.use(morgan("dev"));
 }
@@ -82,19 +84,7 @@ app.use(express.json({ limit: "10kb" }));
 app.use(mongoSanitize());
 
 /* ===============================
-   ANALYTICS VISIT TRACKER
-================================ */
-app.use(async (req, res, next) => {
-  try {
-    await incrementVisit();
-  } catch (err) {
-    console.error("Visit analytics error");
-  }
-  next();
-});
-
-/* ===============================
-   CORS (ENV BASED)
+   CORS
 ================================ */
 const allowedOrigins =
   process.env.NODE_ENV === "production"
