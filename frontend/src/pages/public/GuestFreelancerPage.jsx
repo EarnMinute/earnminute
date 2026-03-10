@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import LiveActivityFeed from "../components/LiveActivityFeed";
+import LiveActivityFeed from "../../components/LiveActivityFeed";
 
 function GuestFreelancerPage() {
   return (

@@ -8,26 +8,31 @@ const {
   completeTask,
   rateFreelancer,
   getAllTasksAdmin,
-  deleteTaskAdmin,
+  deleteTask
 } = require("../controllers/taskController");
 
 const { protect } = require("../middleware/authMiddleware");
 const { restrictTo } = require("../middleware/roleMiddleware");
 
 /* ===============================
-   PUBLIC ROUTES
-================================= */
+   PUBLIC TASK ROUTES
+================================ */
+
+/*
+Browse tasks
+Supports filters:
+?search=
+?skill=
+?minBudget=
+?maxBudget=
+?page=
+*/
 router.get("/", getAllTasks);
+
 
 /* ===============================
    EMPLOYER ROUTES
-================================= */
-router.get(
-  "/employer/dashboard",
-  protect,
-  restrictTo("employer"),
-  getEmployerDashboard
-);
+================================ */
 
 router.post(
   "/",
@@ -36,23 +41,31 @@ router.post(
   createTask
 );
 
+router.get(
+  "/employer/dashboard",
+  protect,
+  restrictTo("employer"),
+  getEmployerDashboard
+);
+
 router.patch(
-  "/:taskId/complete",
+  "/:id/complete",
   protect,
   restrictTo("employer"),
   completeTask
 );
 
-router.patch(
-  "/:taskId/rate",
+router.post(
+  "/:id/rate",
   protect,
   restrictTo("employer"),
   rateFreelancer
 );
 
+
 /* ===============================
    ADMIN ROUTES
-================================= */
+================================ */
 
 router.get(
   "/admin/all",
@@ -65,7 +78,7 @@ router.delete(
   "/admin/:id",
   protect,
   restrictTo("admin"),
-  deleteTaskAdmin
+  deleteTask
 );
 
 module.exports = router;

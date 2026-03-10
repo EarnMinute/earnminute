@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useEffect } from "react";
-import API from "../services/api";
+import API from "../../services/api";
 
 function RoleSelectionPage() {
   useEffect(() => {

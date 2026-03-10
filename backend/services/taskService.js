@@ -19,16 +19,34 @@ const createTask = async (employerId, data) => {
 };
 
 /* ===============================
-   GET ALL TASKS
+   GET ALL TASKS (WITH SEARCH)
 ================================ */
-const getAllTasks = async (page) => {
+const getAllTasks = async (queryParams) => {
 
-  const tasks = await taskRepository.getAllOpenTasks();
+  const page = queryParams.page ? Number(queryParams.page) : null;
+
+  const filters = {
+    search: queryParams.search || null,
+    skill: queryParams.skill || null,
+    minBudget: queryParams.minBudget || null,
+    maxBudget: queryParams.maxBudget || null
+  };
+
+  const hasFilters =
+    filters.search ||
+    filters.skill ||
+    filters.minBudget ||
+    filters.maxBudget;
+
+  const tasks = hasFilters
+    ? await taskRepository.searchTasks(filters)
+    : await taskRepository.getAllOpenTasks();
 
   if (!page) return tasks;
 
   const limit = 20;
   const start = (page - 1) * limit;
+
   const paginatedTasks = tasks.slice(start, start + limit);
 
   return {

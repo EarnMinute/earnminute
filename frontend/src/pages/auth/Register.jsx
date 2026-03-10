@@ -1,15 +1,15 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import API from "../services/api";
-import { useAuth } from "../context/AuthContext";
+import API from "../../services/api";
 
-function Login() {
+function Register() {
   const navigate = useNavigate();
-  const { login } = useAuth();
 
   const [form, setForm] = useState({
+    name: "",
     email: "",
     password: "",
+    role: "freelancer",
   });
 
   const [error, setError] = useState("");
@@ -25,23 +25,11 @@ function Login() {
     setLoading(true);
 
     try {
-      const res = await API.post("/auth/login", form);
-
-      login(res.data);
-
-      const role = res.data.user.role;
-
-      if (role === "admin") {
-        navigate("/admin/dashboard");
-      } else if (role === "employer") {
-        navigate("/employer/dashboard");
-      } else if (role === "freelancer") {
-        navigate("/freelancer/dashboard");
-      } else {
-        navigate("/");
-      }
+      const res = await API.post("/auth/register", form);
+      localStorage.setItem("userInfo", JSON.stringify(res.data));
+      navigate("/");
     } catch (err) {
-      setError(err.response?.data?.message || "Login failed");
+      setError(err.response?.data?.message || "Registration failed");
     } finally {
       setLoading(false);
     }
@@ -52,9 +40,9 @@ function Login() {
       <div className="w-full max-w-md">
         {/* HEADER */}
         <div className="text-center mb-10">
-          <h1>Welcome Back</h1>
+          <h1>Create Your Account</h1>
           <p className="text-gray-500 mt-2">
-            Login to manage your tasks and projects.
+            Join EarnMinute and start working today.
           </p>
         </div>
 
@@ -63,12 +51,27 @@ function Login() {
           onSubmit={handleSubmit}
           className="bg-white rounded-xl shadow-md p-8 space-y-5"
         >
+          {/* NAME */}
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">
+              Full Name
+            </label>
+            <input
+              type="text"
+              name="name"
+              placeholder="Enter your full name"
+              value={form.name}
+              onChange={handleChange}
+              className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-900 focus:outline-none transition"
+              required
+            />
+          </div>
+
           {/* EMAIL */}
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-1">
               Email Address
             </label>
-
             <input
               type="email"
               name="email"
@@ -85,16 +88,31 @@ function Login() {
             <label className="block text-sm font-medium text-gray-600 mb-1">
               Password
             </label>
-
             <input
               type="password"
               name="password"
-              placeholder="Enter your password"
+              placeholder="Minimum 8 characters"
               value={form.password}
               onChange={handleChange}
               className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-900 focus:outline-none transition"
               required
             />
+          </div>
+
+          {/* ROLE */}
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">
+              I want to join as
+            </label>
+            <select
+              name="role"
+              value={form.role}
+              onChange={handleChange}
+              className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-900 focus:outline-none transition bg-white"
+            >
+              <option value="freelancer">Freelancer</option>
+              <option value="employer">Employer</option>
+            </select>
           </div>
 
           {/* ERROR */}
@@ -104,20 +122,20 @@ function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-900 text-white py-3 rounded-lg font-medium hover:bg-blue-800 transition shadow-md disabled:opacity-60"
+            className="w-full bg-orange-500 text-white py-3 rounded-lg font-medium hover:bg-orange-600 transition shadow-md disabled:opacity-60"
           >
-            {loading ? "Logging in..." : "Login"}
+            {loading ? "Creating Account..." : "Create Account"}
           </button>
         </form>
 
         {/* FOOTER */}
         <p className="text-center text-sm text-gray-500 mt-6">
-          Don’t have an account?{" "}
+          Already have an account?{" "}
           <span
-            onClick={() => navigate("/register")}
+            onClick={() => navigate("/login")}
             className="text-blue-900 font-medium cursor-pointer hover:underline"
           >
-            Register here
+            Login here
           </span>
         </p>
       </div>
@@ -125,4 +143,4 @@ function Login() {
   );
 }
 
-export default Login;
+export default Register;

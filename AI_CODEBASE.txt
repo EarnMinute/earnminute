@@ -4,12 +4,107 @@ AI CODEBASE EXPORT
 ============================================================
 
 Project Folder : E:\earnminute
-Export Date    : 2026-03-10T04:28:24.666Z
+Export Date    : 2026-03-10T06:34:21.188Z
 
-Total Files    : 66
-Total Lines    : 5763
+Total Files    : 65
+Total Lines    : 5920
 
 ============================================================
+
+
+============================================================
+PROJECT STRUCTURE
+============================================================
+
+earnminute
+├── .gitignore
+├── backend
+│   ├── .env
+│   ├── controllers
+│   │   ├── analyticsController.js
+│   │   ├── applicationController.js
+│   │   ├── authController.js
+│   │   ├── taskController.js
+│   │   └── userController.js
+│   ├── middleware
+│   │   ├── abuseLimiter.js
+│   │   ├── authMiddleware.js
+│   │   └── roleMiddleware.js
+│   ├── models
+│   │   ├── Analytics.js
+│   │   ├── Application.js
+│   │   ├── Task.js
+│   │   └── User.js
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── repositories
+│   │   ├── analyticsRepository.js
+│   │   ├── taskRepository.js
+│   │   └── userRepository.js
+│   ├── routes
+│   │   ├── analyticsRoutes.js
+│   │   ├── applicationRoutes.js
+│   │   ├── authRoutes.js
+│   │   ├── taskRoutes.js
+│   │   └── userRoutes.js
+│   ├── server.js
+│   └── services
+│       ├── analyticsService.js
+│       ├── applicationService.js
+│       ├── authService.js
+│       └── taskService.js
+├── exportCodebase.js
+└── frontend
+    ├── .env.local
+    ├── index.html
+    ├── package-lock.json
+    ├── package.json
+    ├── postcss.config.js
+    ├── src
+    │   ├── App.jsx
+    │   ├── assets
+    │   ├── components
+    │   │   ├── AdminLayout.jsx
+    │   │   ├── AdminSidebar.jsx
+    │   │   ├── AdminTopbar.jsx
+    │   │   ├── Footer.jsx
+    │   │   ├── LiveActivityFeed.jsx
+    │   │   ├── Navbar.jsx
+    │   │   ├── ProtectedRoute.jsx
+    │   │   └── RatingModal.jsx
+    │   ├── context
+    │   │   └── AuthContext.jsx
+    │   ├── index.css
+    │   ├── main.jsx
+    │   ├── pages
+    │   │   ├── AdminAnalytics.jsx
+    │   │   ├── AdminDashboard.jsx
+    │   │   ├── AdminTasks.jsx
+    │   │   ├── AdminUsers.jsx
+    │   │   ├── EmployerDashboard.jsx
+    │   │   ├── FeedbackPage.jsx
+    │   │   ├── Forbidden.jsx
+    │   │   ├── FreelancerDashboard.jsx
+    │   │   ├── FreelancerProfile.jsx
+    │   │   ├── GuestEmployerPage.jsx
+    │   │   ├── GuestFreelancerPage.jsx
+    │   │   ├── Login.jsx
+    │   │   ├── NotFound.jsx
+    │   │   ├── PostTask.jsx
+    │   │   ├── Privacy.jsx
+    │   │   ├── Register.jsx
+    │   │   ├── RoleSelectionPage.jsx
+    │   │   ├── TaskDetails.jsx
+    │   │   ├── Tasks.jsx
+    │   │   └── Terms.jsx
+    │   └── services
+    │       └── api.js
+    ├── tailwind.config.js
+    └── vite.config.js
+
+
+============================================================
+
 
 
 ############################################################
@@ -49,15 +144,17 @@ exports.getPublicAnalytics = async (req, res) => {
     });
 
   } catch (error) {
+
     res.status(500).json({
       message: "Analytics error",
       error: error.message,
     });
+
   }
 };
 
 /* ===============================
-   ADMIN DASHBOARD + CHART ANALYTICS
+   ADMIN DASHBOARD ANALYTICS
 ================================ */
 exports.getAdminDashboardAnalytics = async (req, res) => {
   try {
@@ -96,9 +193,34 @@ exports.getAdminDashboardAnalytics = async (req, res) => {
       .limit(5)
       .populate("employer", "name");
 
-    const analyticsHistory = await Analytics.find()
-      .sort({ date: 1 })
-      .limit(30);
+    res.status(200).json({
+      totalUsers,
+      totalFreelancers,
+      totalEmployers,
+      totalTasks,
+      totalApplications,
+      activeToday,
+      recentUsers,
+      recentTasks,
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+      message: "Admin analytics error",
+      error: error.message,
+    });
+
+  }
+};
+
+/* ===============================
+   ADMIN CHART DATA ONLY
+================================ */
+exports.getAdminCharts = async (req, res) => {
+  try {
+
+    const analyticsHistory = await Analytics.find();
 
     const tasksPerDay = await Task.aggregate([
       {
@@ -114,41 +236,48 @@ exports.getAdminDashboardAnalytics = async (req, res) => {
           },
           tasks: { $sum: 1 }
         }
-      },
-      { $sort: { _id: 1 } },
-      { $limit: 30 }
+      }
     ]);
 
-    const chartData = analyticsHistory.map(day => {
+    const historyMap = new Map();
 
-      const taskDay = tasksPerDay.find(t => t._id === day.date);
-
-      return {
-        date: day.date,
-        visits: day.visits || 0,
-        registrations: day.registrations || 0,
-        logins: day.logins || 0,
-        tasks: taskDay ? taskDay.tasks : 0
-      };
-
+    analyticsHistory.forEach(day => {
+      historyMap.set(day.date, day);
     });
 
-    res.status(200).json({
-      totalUsers,
-      totalFreelancers,
-      totalEmployers,
-      totalTasks,
-      totalApplications,
-      activeToday,
-      recentUsers,
-      recentTasks,
-      chartData
+    const taskMap = new Map();
+
+    tasksPerDay.forEach(t => {
+      taskMap.set(t._id, t.tasks);
     });
+
+    const chartData = [];
+
+    for (let i = 29; i >= 0; i--) {
+
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+
+      const date = d.toISOString().split("T")[0];
+
+      const analytics = historyMap.get(date);
+
+      chartData.push({
+        date,
+        visits: analytics ? analytics.visits : 0,
+        registrations: analytics ? analytics.registrations : 0,
+        logins: analytics ? analytics.logins : 0,
+        tasks: taskMap.get(date) || 0
+      });
+
+    }
+
+    res.status(200).json(chartData);
 
   } catch (error) {
 
     res.status(500).json({
-      message: "Admin analytics error",
+      message: "Admin charts error",
       error: error.message,
     });
 
@@ -156,25 +285,30 @@ exports.getAdminDashboardAnalytics = async (req, res) => {
 };
 
 /* ===============================
-   INCREMENT VISIT
+   TRACK VISIT (1 PER IP / DAY)
 ================================ */
-exports.incrementVisit = async () => {
-  return analyticsService.incrementVisit();
+exports.trackVisit = async (req, res) => {
+
+  try {
+
+    const ip =
+      req.headers["x-forwarded-for"] ||
+      req.socket.remoteAddress ||
+      "unknown";
+
+    await analyticsService.incrementVisit(ip);
+
+    res.status(200).json({ success: true });
+
+  } catch (error) {
+
+    res.status(500).json({
+      message: "Visit tracking error",
+    });
+
+  }
 };
 
-/* ===============================
-   INCREMENT REGISTRATION
-================================ */
-exports.incrementRegistration = async () => {
-  return analyticsService.incrementRegistration();
-};
-
-/* ===============================
-   INCREMENT LOGIN
-================================ */
-exports.incrementLogin = async () => {
-  return analyticsService.incrementLogin();
-};
 
 
 ############################################################
@@ -373,6 +507,7 @@ exports.getAllApplicationsAdmin = async (req, res) => {
 };
 
 
+
 ############################################################
 FILE: backend\controllers\authController.js
 ############################################################
@@ -462,6 +597,7 @@ exports.login = async (req, res) => {
 };
 
 
+
 ############################################################
 FILE: backend\controllers\taskController.js
 ############################################################
@@ -499,7 +635,9 @@ exports.getAllTasks = async (req, res) => {
 
   try {
 
-    const tasks = await taskService.getAllTasks();
+    const page = req.query.page ? Number(req.query.page) : null;
+
+    const tasks = await taskService.getAllTasks(page);
 
     res.status(200).json(tasks);
 
@@ -600,7 +738,9 @@ exports.getAllTasksAdmin = async (req, res) => {
 
   try {
 
-    const tasks = await taskService.getAllTasksAdmin();
+    const page = req.query.page ? Number(req.query.page) : null;
+
+    const tasks = await taskService.getAllTasksAdmin(page);
 
     res.status(200).json(tasks);
 
@@ -638,6 +778,7 @@ exports.deleteTaskAdmin = async (req, res) => {
 };
 
 
+
 ############################################################
 FILE: backend\controllers\userController.js
 ############################################################
@@ -668,11 +809,35 @@ exports.getFreelancerProfile = async (req, res) => {
 ================================== */
 exports.getAllUsersAdmin = async (req, res) => {
   try {
+
+    const page = req.query.page ? Number(req.query.page) : null;
+
+    if (!page) {
+      const users = await User.find()
+        .sort({ createdAt: -1 })
+        .select("name email role createdAt");
+
+      return res.json(users);
+    }
+
+    const limit = 20;
+    const skip = (page - 1) * limit;
+
     const users = await User.find()
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .select("name email role createdAt");
 
-    res.json(users);
+    const totalUsers = await User.countDocuments();
+
+    res.json({
+      page,
+      totalPages: Math.ceil(totalUsers / limit),
+      totalUsers,
+      users
+    });
+
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch users" });
   }
@@ -728,6 +893,7 @@ exports.deleteUserAdmin = async (req, res) => {
 };
 
 
+
 ############################################################
 FILE: backend\middleware\abuseLimiter.js
 ############################################################
@@ -748,6 +914,7 @@ const applicationLimiter = rateLimit({
 module.exports = {
   applicationLimiter,
 };
+
 
 
 ############################################################
@@ -799,6 +966,7 @@ const authorize = (...roles) => {
 module.exports = { protect, authorize };
 
 
+
 ############################################################
 FILE: backend\middleware\roleMiddleware.js
 ############################################################
@@ -814,6 +982,7 @@ exports.restrictTo = (...roles) => {
 
 
 
+
 ############################################################
 FILE: backend\models\Analytics.js
 ############################################################
@@ -826,15 +995,19 @@ const analyticsSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
+      index: true,
     },
+
     visits: {
       type: Number,
       default: 0,
     },
+
     registrations: {
       type: Number,
       default: 0,
     },
+
     logins: {
       type: Number,
       default: 0,
@@ -846,6 +1019,7 @@ const analyticsSchema = new mongoose.Schema(
 module.exports = mongoose.model("Analytics", analyticsSchema);
 
 
+
 ############################################################
 FILE: backend\models\Application.js
 ############################################################
@@ -855,14 +1029,27 @@ const mongoose = require("mongoose");
 const applicationSchema = new mongoose.Schema({
   task: { type: mongoose.Schema.Types.ObjectId, ref: "Task", required: true },
   freelancer: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+
   status: {
     type: String,
     enum: ["applied", "assigned", "rejected"],
     default: "applied",
   },
+
 }, { timestamps: true });
 
+/* ===============================
+   INDEXES
+================================ */
+
+/* Prevent duplicate applications */
 applicationSchema.index({ task: 1, freelancer: 1 }, { unique: true });
+
+/* Employer viewing applications */
+applicationSchema.index({ task: 1 });
+
+/* Freelancer dashboard */
+applicationSchema.index({ freelancer: 1 });
 
 module.exports = mongoose.model("Application", applicationSchema);
 
@@ -881,28 +1068,66 @@ const taskSchema = new mongoose.Schema({
   budgetType: { type: String, enum: ["fixed", "negotiable"], required: true },
   budgetAmount: { type: Number, required: true },
   deadline: { type: Date },
+
   status: {
     type: String,
     enum: ["open", "assigned", "completed"],
     default: "open",
   },
+
   isRated: {
-  type: Boolean,
-  default: false,
+    type: Boolean,
+    default: false,
   },
+
   rating: {
-  type: Number,
-  min: 1,
-  max: 5,
+    type: Number,
+    min: 1,
+    max: 5,
   },
+
   review: {
-  type: String,
+    type: String,
   },
-  employer: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  assignedFreelancer: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  applicationsCount: { type: Number, default: 0 },
-  isDeleted: { type: Boolean, default: false },
+
+  employer: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+
+  assignedFreelancer: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+  },
+
+  applicationsCount: {
+    type: Number,
+    default: 0,
+  },
+
+  isDeleted: {
+    type: Boolean,
+    default: false,
+  },
+
 }, { timestamps: true });
+
+/* ===============================
+   INDEXES
+================================ */
+
+/* Browse tasks */
+taskSchema.index({ status: 1, isDeleted: 1, createdAt: -1 });
+
+/* Employer dashboard */
+taskSchema.index({ employer: 1, createdAt: -1 });
+
+/* Assigned freelancer lookup */
+taskSchema.index({ assignedFreelancer: 1 });
+
+/* Admin moderation sorting */
+taskSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model("Task", taskSchema);
 
@@ -944,6 +1169,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["freelancer", "employer", "admin"],
       required: true,
+      index: true,
     },
 
     loginAttempts: {
@@ -961,6 +1187,11 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+/* ===============================
+   INDEXES
+================================ */
+userSchema.index({ createdAt: -1 });
 
 /* ===============================
    ACCOUNT LOCK LOGIC
@@ -988,6 +1219,7 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 };
 
 module.exports = mongoose.model("User", userSchema);
+
 
 
 ############################################################
@@ -1024,6 +1256,7 @@ FILE: backend\package.json
     "nodemon": "^3.1.0"
   }
 }
+
 
 
 
@@ -1089,6 +1322,7 @@ module.exports = {
   incrementLogins,
   getAnalyticsHistory
 };
+
 
 
 ############################################################
@@ -1174,6 +1408,7 @@ module.exports = {
 };
 
 
+
 ############################################################
 FILE: backend\repositories\userRepository.js
 ############################################################
@@ -1216,6 +1451,7 @@ module.exports = {
 };
 
 
+
 ############################################################
 FILE: backend\routes\analyticsRoutes.js
 ############################################################
@@ -1226,6 +1462,8 @@ const router = express.Router();
 const {
   getPublicAnalytics,
   getAdminDashboardAnalytics,
+  getAdminCharts,
+  trackVisit
 } = require("../controllers/analyticsController");
 
 router.get("/public", getPublicAnalytics);
@@ -1233,7 +1471,14 @@ router.get("/public", getPublicAnalytics);
 // Admin dashboard stats
 router.get("/admin-dashboard", getAdminDashboardAnalytics);
 
+// Admin charts
+router.get("/admin-charts", getAdminCharts);
+
+// Track visit (1 per IP per day)
+router.post("/visit", trackVisit);
+
 module.exports = router;
+
 
 
 ############################################################
@@ -1308,6 +1553,7 @@ router.patch(
 module.exports = router;
 
 
+
 ############################################################
 FILE: backend\routes\authRoutes.js
 ############################################################
@@ -1341,6 +1587,7 @@ router.post(
 );
 
 module.exports = router;
+
 
 
 ############################################################
@@ -1420,6 +1667,7 @@ router.delete(
 module.exports = router;
 
 
+
 ############################################################
 FILE: backend\routes\userRoutes.js
 ############################################################
@@ -1449,6 +1697,7 @@ router.delete("/admin/:id", deleteUserAdmin);
 module.exports = router;
 
 
+
 ############################################################
 FILE: backend\server.js
 ############################################################
@@ -1463,7 +1712,6 @@ const mongoSanitize = require("express-mongo-sanitize");
 const { applicationLimiter } = require("./middleware/abuseLimiter");
 const morgan = require("morgan");
 const userRoutes = require("./routes/userRoutes");
-const { incrementVisit } = require("./controllers/analyticsController");
 
 dotenv.config();
 
@@ -1540,35 +1788,7 @@ app.use(express.json({ limit: "10kb" }));
 app.use(mongoSanitize());
 
 /* ===============================
-   ANALYTICS VISIT TRACKER
-   (SCALABLE BATCHED VERSION)
-================================ */
-
-let visitCounter = 0;
-
-/* Count visits in memory */
-app.use((req, res, next) => {
-  visitCounter += 1;
-  next();
-});
-
-/* Flush visits to DB every minute */
-setInterval(async () => {
-  if (visitCounter === 0) return;
-
-  try {
-    for (let i = 0; i < visitCounter; i++) {
-      await incrementVisit();
-    }
-
-    visitCounter = 0;
-  } catch (err) {
-    console.error("Visit analytics batch error:", err.message);
-  }
-}, 60000);
-
-/* ===============================
-   CORS (ENV BASED)
+   CORS
 ================================ */
 const allowedOrigins =
   process.env.NODE_ENV === "production"
@@ -1643,11 +1863,17 @@ app.listen(PORT, "0.0.0.0", () => {
 });
 
 
+
 ############################################################
 FILE: backend\services\analyticsService.js
 ############################################################
 
 const analyticsRepository = require("../repositories/analyticsRepository");
+
+/* ===============================
+   VISIT IP CACHE
+================================ */
+const visitCache = new Map();
 
 /* ===============================
    GET TODAY DATE
@@ -1657,10 +1883,19 @@ const getToday = () => {
 };
 
 /* ===============================
-   INCREMENT VISIT
+   INCREMENT VISIT (1 PER IP/DAY)
 ================================ */
-const incrementVisit = async () => {
+const incrementVisit = async (ip) => {
+
   const today = getToday();
+  const key = `${ip}-${today}`;
+
+  if (visitCache.has(key)) {
+    return;
+  }
+
+  visitCache.set(key, true);
+
   return analyticsRepository.incrementVisits(today, 1);
 };
 
@@ -1693,6 +1928,7 @@ module.exports = {
   incrementLogin,
   getAnalyticsHistory
 };
+
 
 
 ############################################################
@@ -1731,6 +1967,7 @@ const applyToTask = async (taskId, freelancerId) => {
 module.exports = {
   applyToTask
 };
+
 
 
 ############################################################
@@ -1863,12 +2100,14 @@ module.exports = {
 };
 
 
+
 ############################################################
 FILE: backend\services\taskService.js
 ############################################################
 
 const taskRepository = require("../repositories/taskRepository");
 const Application = require("../models/Application");
+const Task = require("../models/Task");
 
 /* ===============================
    CREATE TASK
@@ -1889,8 +2128,23 @@ const createTask = async (employerId, data) => {
 /* ===============================
    GET ALL TASKS
 ================================ */
-const getAllTasks = async () => {
-  return taskRepository.getAllOpenTasks();
+const getAllTasks = async (page) => {
+
+  const tasks = await taskRepository.getAllOpenTasks();
+
+  if (!page) return tasks;
+
+  const limit = 20;
+  const start = (page - 1) * limit;
+  const paginatedTasks = tasks.slice(start, start + limit);
+
+  return {
+    page,
+    totalPages: Math.ceil(tasks.length / limit),
+    totalTasks: tasks.length,
+    tasks: paginatedTasks
+  };
+
 };
 
 /* ===============================
@@ -1969,28 +2223,110 @@ const rateFreelancer = async (taskId, employerId, rating, review) => {
 };
 
 /* ===============================
-   ADMIN GET TASKS
+   ADMIN GET TASKS (OPTIMIZED)
 ================================ */
-const getAllTasksAdmin = async () => {
+const getAllTasksAdmin = async (page) => {
 
-  const tasks = await taskRepository.getAllTasksAdmin();
+  const limit = 20;
+  const skip = page ? (page - 1) * limit : 0;
 
-  const tasksWithApplications = await Promise.all(
-    tasks.map(async (task) => {
+  const tasks = await Task.aggregate([
 
-      const applications = await Application.find({
-        task: task._id
-      }).populate("freelancer", "name rating");
+    {
+      $match: { isDeleted: { $ne: true } }
+    },
+
+    {
+      $lookup: {
+        from: "users",
+        localField: "employer",
+        foreignField: "_id",
+        as: "employer"
+      }
+    },
+
+    {
+      $unwind: {
+        path: "$employer",
+        preserveNullAndEmptyArrays: true
+      }
+    },
+
+    {
+      $lookup: {
+        from: "users",
+        localField: "assignedFreelancer",
+        foreignField: "_id",
+        as: "assignedFreelancer"
+      }
+    },
+
+    {
+      $unwind: {
+        path: "$assignedFreelancer",
+        preserveNullAndEmptyArrays: true
+      }
+    },
+
+    {
+      $lookup: {
+        from: "applications",
+        localField: "_id",
+        foreignField: "task",
+        as: "applications"
+      }
+    },
+
+    {
+      $lookup: {
+        from: "users",
+        localField: "applications.freelancer",
+        foreignField: "_id",
+        as: "freelancers"
+      }
+    },
+
+    {
+      $sort: { createdAt: -1 }
+    }
+
+  ]);
+
+  const formattedTasks = tasks.map((task) => {
+
+    const applications = task.applications.map((app) => {
+
+      const freelancer = task.freelancers.find(
+        (f) => f._id.toString() === app.freelancer.toString()
+      );
 
       return {
-        ...task.toObject(),
-        applications
+        ...app,
+        freelancer: freelancer
+          ? { _id: freelancer._id, name: freelancer.name, rating: freelancer.rating }
+          : null
       };
 
-    })
-  );
+    });
 
-  return tasksWithApplications;
+    return {
+      ...task,
+      applications
+    };
+
+  });
+
+  if (!page) return formattedTasks;
+
+  const paginated = formattedTasks.slice(skip, skip + limit);
+
+  return {
+    page,
+    totalPages: Math.ceil(formattedTasks.length / limit),
+    totalTasks: formattedTasks.length,
+    tasks: paginated
+  };
+
 };
 
 /* ===============================
@@ -2022,14 +2358,16 @@ module.exports = {
 };
 
 
+
 ############################################################
-FILE: extract_ai_codebase.js
+FILE: exportCodebase.js
 ############################################################
 
 const fs = require("fs");
 const path = require("path");
 
 const rootDir = process.cwd();
+const projectName = path.basename(rootDir);
 const outputFile = path.join(rootDir, "AI_CODEBASE.txt");
 
 const allowedExtensions = [
@@ -2070,6 +2408,56 @@ let stats = {
 function shouldIgnore(file) {
   return ignoredFiles.includes(file);
 }
+
+/* =========================================================
+   PROJECT STRUCTURE GENERATOR
+========================================================= */
+
+function generateTree(dir, prefix = "") {
+
+  let tree = "";
+  let files;
+
+  try {
+    files = fs.readdirSync(dir);
+  } catch {
+    return "";
+  }
+
+  files = files.filter(file => !ignoredFolders.includes(file));
+
+  files.forEach((file, index) => {
+
+    const fullPath = path.join(dir, file);
+
+    let stat;
+
+    try {
+      stat = fs.statSync(fullPath);
+    } catch {
+      return;
+    }
+
+    const isLast = index === files.length - 1;
+    const connector = isLast ? "└── " : "├── ";
+
+    tree += `${prefix}${connector}${file}\n`;
+
+    if (stat.isDirectory()) {
+
+      const nextPrefix = prefix + (isLast ? "    " : "│   ");
+      tree += generateTree(fullPath, nextPrefix);
+
+    }
+
+  });
+
+  return tree;
+}
+
+/* =========================================================
+   CODE EXPORT
+========================================================= */
 
 function readDirectory(dir) {
 
@@ -2121,6 +2509,7 @@ function readDirectory(dir) {
     stats.lines += content.split("\n").length;
 
     result += `
+
 ############################################################
 FILE: ${path.relative(rootDir, fullPath)}
 ############################################################
@@ -2134,6 +2523,26 @@ ${content}
 }
 
 console.log("🔍 Scanning project...");
+
+/* =========================================================
+   BUILD STRUCTURE
+========================================================= */
+
+const treeStructure = `
+============================================================
+PROJECT STRUCTURE
+============================================================
+
+${projectName}
+${generateTree(rootDir)}
+
+============================================================
+
+`;
+
+/* =========================================================
+   EXPORT CODEBASE
+========================================================= */
 
 const codebase = readDirectory(rootDir);
 
@@ -2152,137 +2561,13 @@ Total Lines    : ${stats.lines}
 
 `;
 
-fs.writeFileSync(outputFile, header + codebase);
+fs.writeFileSync(outputFile, header + treeStructure + codebase);
 
 console.log("✅ Codebase exported successfully");
 console.log("📄 File:", outputFile);
 console.log("📦 Files:", stats.files);
 console.log("📏 Lines:", stats.lines);
 
-
-############################################################
-FILE: extract_codebase.js
-############################################################
-
-const fs = require("fs");
-const path = require("path");
-
-// Automatically detect project root
-const rootDir = process.cwd();
-
-// Output file
-const outputFile = path.join(rootDir, "project_codebase.txt");
-
-// Extensions to include
-const allowedExtensions = [
-  ".js",
-  ".jsx",
-  ".ts",
-  ".tsx",
-  ".json",
-  ".css",
-  ".html",
-  ".md"
-];
-
-// Folders to ignore
-const ignoredFolders = [
-  "node_modules",
-  ".git",
-  "dist",
-  "build",
-  ".next",
-  "coverage",
-  ".vercel",
-  ".idea",
-  ".vscode"
-];
-
-// Files to ignore
-const ignoredFiles = [
-  ".env",
-  "package-lock.json",
-  "yarn.lock"
-];
-
-function readDirectory(dir) {
-  let result = "";
-
-  let files;
-
-  try {
-    files = fs.readdirSync(dir);
-  } catch (err) {
-    console.log("Cannot read directory:", dir);
-    return "";
-  }
-
-  for (const file of files) {
-
-    const fullPath = path.join(dir, file);
-
-    let stat;
-
-    try {
-      stat = fs.statSync(fullPath);
-    } catch (err) {
-      console.log("Cannot access:", fullPath);
-      continue;
-    }
-
-    // Skip ignored folders
-    if (stat.isDirectory()) {
-
-      if (ignoredFolders.includes(file)) {
-        continue;
-      }
-
-      result += readDirectory(fullPath);
-      continue;
-    }
-
-    // Skip ignored files
-    if (ignoredFiles.includes(file)) {
-      continue;
-    }
-
-    const ext = path.extname(file);
-
-    if (!allowedExtensions.includes(ext)) {
-      continue;
-    }
-
-    let content;
-
-    try {
-      content = fs.readFileSync(fullPath, "utf8");
-    } catch (err) {
-      console.log("Cannot read file:", fullPath);
-      continue;
-    }
-
-    result += `
-================================================
-FILE: ${path.relative(rootDir, fullPath)}
-================================================
-
-${content}
-
-`;
-  }
-
-  return result;
-}
-
-// Run extractor
-console.log("🔍 Scanning project...");
-
-const output = readDirectory(rootDir);
-
-fs.writeFileSync(outputFile, output);
-
-console.log("✅ Project codebase exported successfully!");
-console.log("📄 File created:", outputFile);
 
 
 ############################################################
@@ -2304,6 +2589,7 @@ FILE: frontend\index.html
 
 
 
+
 ############################################################
 FILE: frontend\package.json
 ############################################################
@@ -2319,6 +2605,7 @@ FILE: frontend\package.json
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.90.21",
     "axios": "^1.6.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -2336,6 +2623,7 @@ FILE: frontend\package.json
 
 
 
+
 ############################################################
 FILE: frontend\postcss.config.js
 ############################################################
@@ -2346,6 +2634,7 @@ export default {
     autoprefixer: {},
   },
 }
+
 
 
 
@@ -2473,6 +2762,7 @@ export default App;
 
 
 
+
 ############################################################
 FILE: frontend\src\components\AdminLayout.jsx
 ############################################################
@@ -2495,6 +2785,7 @@ function AdminLayout({ children }) {
 }
 
 export default AdminLayout;
+
 
 
 
@@ -2541,6 +2832,7 @@ export default AdminSidebar;
 
 
 
+
 ############################################################
 FILE: frontend\src\components\AdminTopbar.jsx
 ############################################################
@@ -2566,6 +2858,7 @@ function AdminTopbar() {
 }
 
 export default AdminTopbar;
+
 
 
 
@@ -2646,6 +2939,7 @@ function Footer() {
 }
 
 export default Footer;
+
 
 
 
@@ -2940,6 +3234,7 @@ export default LiveActivityFeed;
 
 
 
+
 ############################################################
 FILE: frontend\src\components\Navbar.jsx
 ############################################################
@@ -3059,6 +3354,7 @@ export default Navbar;
 
 
 
+
 ############################################################
 FILE: frontend\src\components\ProtectedRoute.jsx
 ############################################################
@@ -3081,6 +3377,7 @@ function ProtectedRoute({ children, role }) {
 }
 
 export default ProtectedRoute;
+
 
 
 
@@ -3200,6 +3497,7 @@ export default RatingModal;
 
 
 
+
 ############################################################
 FILE: frontend\src\context\AuthContext.jsx
 ############################################################
@@ -3231,6 +3529,7 @@ export const AuthProvider = ({ children }) => {
 };
 
 export const useAuth = () => useContext(AuthContext);
+
 
 
 
@@ -3277,6 +3576,7 @@ FILE: frontend\src\index.css
 }
 
 
+
 ############################################################
 FILE: frontend\src\main.jsx
 ############################################################
@@ -3284,19 +3584,32 @@ FILE: frontend\src\main.jsx
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App from "./App";
 import "./index.css";
 import { AuthProvider } from "./context/AuthContext";
 
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <AuthProvider>
-        <App />
-      </AuthProvider>
-    </BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </BrowserRouter>
+    </QueryClientProvider>
   </React.StrictMode>,
 );
+
 
 
 
@@ -3304,7 +3617,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
 FILE: frontend\src\pages\AdminAnalytics.jsx
 ############################################################
 
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import API from "../services/api";
 import AdminLayout from "../components/AdminLayout";
 import {
@@ -3320,41 +3633,25 @@ import {
 } from "recharts";
 
 function AdminAnalytics() {
-  const [chartData, setChartData] = useState([]);
+  const fetchCharts = async () => {
+    const res = await API.get("/analytics/admin-charts");
+    return res.data;
+  };
 
-  const [stats, setStats] = useState({
-    totalUsers: 0,
-    totalFreelancers: 0,
-    totalEmployers: 0,
-    totalTasks: 0,
-    totalApplications: 0,
-    activeToday: 0,
+  const { data: chartData = [], isLoading } = useQuery({
+    queryKey: ["adminCharts"],
+    queryFn: fetchCharts,
+    staleTime: 1000 * 60 * 10,
+    refetchOnMount: false,
   });
 
-  useEffect(() => {
-    fetchStats();
-    fetchCharts();
-  }, []);
-
-  const fetchStats = async () => {
-    try {
-      const res = await API.get("/analytics/admin-dashboard");
-
-      setStats(res.data);
-    } catch (error) {
-      console.error("Stats error", error);
-    }
-  };
-
-  const fetchCharts = async () => {
-    try {
-      const res = await API.get("/analytics/admin-charts");
-
-      setChartData(res.data);
-    } catch (error) {
-      console.error("Charts error", error);
-    }
-  };
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <p className="text-center mt-10">Loading analytics...</p>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
@@ -3369,17 +3666,6 @@ function AdminAnalytics() {
           </p>
         </div>
 
-        {/* SUMMARY CARDS */}
-
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6 mb-12">
-          <StatCard label="Users" value={stats.totalUsers} />
-          <StatCard label="Freelancers" value={stats.totalFreelancers} />
-          <StatCard label="Employers" value={stats.totalEmployers} />
-          <StatCard label="Tasks" value={stats.totalTasks} />
-          <StatCard label="Applications" value={stats.totalApplications} />
-          <StatCard label="Active Today" value={stats.activeToday} />
-        </div>
-
         {/* TRAFFIC CHART */}
 
         <div className="bg-white rounded-xl shadow-md p-6 mb-10">
@@ -3388,11 +3674,8 @@ function AdminAnalytics() {
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
-
               <XAxis dataKey="date" />
-
               <YAxis />
-
               <Tooltip />
 
               <Line
@@ -3427,11 +3710,8 @@ function AdminAnalytics() {
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
-
               <XAxis dataKey="date" />
-
               <YAxis />
-
               <Tooltip />
 
               <Bar dataKey="tasks" fill="#f97316" />
@@ -3443,17 +3723,8 @@ function AdminAnalytics() {
   );
 }
 
-function StatCard({ label, value }) {
-  return (
-    <div className="bg-white rounded-xl shadow-md p-6">
-      <p className="text-sm text-gray-500">{label}</p>
-
-      <p className="text-2xl font-bold mt-1 text-blue-900">{value}</p>
-    </div>
-  );
-}
-
 export default AdminAnalytics;
+
 
 
 
@@ -3461,60 +3732,60 @@ export default AdminAnalytics;
 FILE: frontend\src\pages\AdminDashboard.jsx
 ############################################################
 
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import API from "../services/api";
 import AdminLayout from "../components/AdminLayout";
 
 function AdminDashboard() {
-  const [stats, setStats] = useState({
-    totalUsers: 0,
-    totalFreelancers: 0,
-    totalEmployers: 0,
-    totalTasks: 0,
-    totalApplications: 0,
-    activeToday: 0,
+  const fetchAdminAnalytics = async () => {
+    const res = await API.get("/analytics/admin-dashboard");
+    return res.data;
+  };
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["adminDashboard"],
+    queryFn: fetchAdminAnalytics,
   });
 
-  const [recentUsers, setRecentUsers] = useState([]);
-  const [recentTasks, setRecentTasks] = useState([]);
+  const stats = data
+    ? {
+        totalUsers: data.totalUsers,
+        totalFreelancers: data.totalFreelancers,
+        totalEmployers: data.totalEmployers,
+        totalTasks: data.totalTasks,
+        totalApplications: data.totalApplications,
+        activeToday: data.activeToday,
+      }
+    : {
+        totalUsers: 0,
+        totalFreelancers: 0,
+        totalEmployers: 0,
+        totalTasks: 0,
+        totalApplications: 0,
+        activeToday: 0,
+      };
 
-  useEffect(() => {
-    fetchAdminAnalytics();
-  }, []);
+  const recentUsers = data?.recentUsers || [];
+  const recentTasks = data?.recentTasks || [];
 
-  const fetchAdminAnalytics = async () => {
-    try {
-      const res = await API.get("/analytics/admin-dashboard");
-
-      setStats({
-        totalUsers: res.data.totalUsers,
-        totalFreelancers: res.data.totalFreelancers,
-        totalEmployers: res.data.totalEmployers,
-        totalTasks: res.data.totalTasks,
-        totalApplications: res.data.totalApplications,
-        activeToday: res.data.activeToday,
-      });
-
-      setRecentUsers(res.data.recentUsers);
-      setRecentTasks(res.data.recentTasks);
-    } catch (error) {
-      console.error("Admin analytics error", error);
-    }
-  };
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <p className="text-center mt-10">Loading dashboard...</p>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
       <div className="max-w-7xl mx-auto">
-        {/* HEADER */}
         <div className="mb-10">
           <h1 className="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
-
           <p className="text-gray-500 mt-2">
             Platform overview and marketplace statistics.
           </p>
         </div>
 
-        {/* STATS */}
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6">
           <StatCard
             label="Total Users"
@@ -3548,7 +3819,6 @@ function AdminDashboard() {
           />
         </div>
 
-        {/* RECENT USERS */}
         <div className="mt-12 bg-white rounded-xl shadow-md p-6">
           <h2 className="text-lg font-semibold text-gray-800 mb-6">
             Recent Users
@@ -3577,7 +3847,6 @@ function AdminDashboard() {
           </table>
         </div>
 
-        {/* RECENT TASKS */}
         <div className="mt-10 bg-white rounded-xl shadow-md p-6">
           <h2 className="text-lg font-semibold text-gray-800 mb-6">
             Recent Tasks
@@ -3623,39 +3892,40 @@ export default AdminDashboard;
 
 
 
+
 ############################################################
 FILE: frontend\src\pages\AdminTasks.jsx
 ############################################################
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import API from "../services/api";
 import AdminLayout from "../components/AdminLayout";
 
 function AdminTasks() {
-  const [tasks, setTasks] = useState([]);
   const [activeTab, setActiveTab] = useState("all");
   const [selectedTask, setSelectedTask] = useState(null);
 
-  useEffect(() => {
-    fetchTasks();
-  }, []);
+  const queryClient = useQueryClient();
 
   const fetchTasks = async () => {
-    try {
-      const res = await API.get("/tasks/admin/all");
-      setTasks(res.data);
-    } catch (error) {
-      console.error("Failed to load tasks", error);
-    }
+    const res = await API.get("/tasks/admin/all");
+    return res.data;
   };
+
+  const { data: tasks = [], isLoading } = useQuery({
+    queryKey: ["adminTasks"],
+    queryFn: fetchTasks,
+  });
 
   const deleteTask = async (id) => {
     if (!window.confirm("Delete this task?")) return;
 
     try {
       await API.delete(`/tasks/admin/${id}`);
-      fetchTasks();
+
+      queryClient.invalidateQueries(["adminTasks"]);
     } catch (error) {
       console.error("Delete failed", error);
     }
@@ -3665,6 +3935,14 @@ function AdminTasks() {
     activeTab === "all"
       ? tasks
       : tasks.filter((task) => task.status === activeTab);
+
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <p className="text-center mt-10">Loading tasks...</p>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
@@ -3761,7 +4039,6 @@ function AdminTasks() {
               <div className="space-y-3 max-h-80 overflow-y-auto">
                 {selectedTask.applications
                   ?.filter((app) => {
-                    // Only show assigned freelancer for completed tasks
                     if (selectedTask.status === "completed") {
                       return app.status === "assigned";
                     }
@@ -3832,34 +4109,33 @@ export default AdminTasks;
 
 
 
+
 ############################################################
 FILE: frontend\src\pages\AdminUsers.jsx
 ############################################################
 
-import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import API from "../services/api";
 import AdminLayout from "../components/AdminLayout";
 
 function AdminUsers() {
-  const [users, setUsers] = useState([]);
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  const queryClient = useQueryClient();
 
   const fetchUsers = async () => {
-    try {
-      const res = await API.get("/users/admin/all");
-      setUsers(res.data);
-    } catch (error) {
-      console.error("Failed to load users", error);
-    }
+    const res = await API.get("/users/admin/all");
+    return res.data;
   };
+
+  const { data: users = [], isLoading } = useQuery({
+    queryKey: ["adminUsers"],
+    queryFn: fetchUsers,
+  });
 
   const changeRole = async (id, role) => {
     try {
       await API.patch(`/users/admin/role/${id}`, { role });
-      fetchUsers();
+
+      queryClient.invalidateQueries(["adminUsers"]);
     } catch (error) {
       console.error("Role update failed", error);
     }
@@ -3872,11 +4148,20 @@ function AdminUsers() {
 
     try {
       await API.delete(`/users/admin/${id}`);
-      fetchUsers();
+
+      queryClient.invalidateQueries(["adminUsers"]);
     } catch (error) {
       console.error("User delete failed", error);
     }
   };
+
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <p className="text-center mt-10">Loading users...</p>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
@@ -3935,6 +4220,7 @@ function AdminUsers() {
 }
 
 export default AdminUsers;
+
 
 
 
@@ -4165,6 +4451,7 @@ export default EmployerDashboard;
 
 
 
+
 ############################################################
 FILE: frontend\src\pages\FeedbackPage.jsx
 ############################################################
@@ -4327,6 +4614,7 @@ export default FeedbackPage;
 
 
 
+
 ############################################################
 FILE: frontend\src\pages\Forbidden.jsx
 ############################################################
@@ -4363,6 +4651,7 @@ function Forbidden() {
 }
 
 export default Forbidden;
+
 
 
 
@@ -4517,6 +4806,7 @@ export default FreelancerDashboard;
 
 
 
+
 ############################################################
 FILE: frontend\src\pages\FreelancerProfile.jsx
 ############################################################
@@ -4642,6 +4932,7 @@ function FreelancerProfile() {
 }
 
 export default FreelancerProfile;
+
 
 
 
@@ -4785,6 +5076,7 @@ function GuestEmployerPage() {
 }
 
 export default GuestEmployerPage;
+
 
 
 
@@ -4932,6 +5224,7 @@ export default GuestFreelancerPage;
 
 
 
+
 ############################################################
 FILE: frontend\src\pages\Login.jsx
 ############################################################
@@ -5067,6 +5360,7 @@ export default Login;
 
 
 
+
 ############################################################
 FILE: frontend\src\pages\NotFound.jsx
 ############################################################
@@ -5103,6 +5397,7 @@ function NotFound() {
 }
 
 export default NotFound;
+
 
 
 
@@ -5319,6 +5614,7 @@ export default PostTask;
 
 
 
+
 ############################################################
 FILE: frontend\src\pages\Privacy.jsx
 ############################################################
@@ -5456,6 +5752,7 @@ function Privacy() {
 }
 
 export default Privacy;
+
 
 
 
@@ -5612,13 +5909,20 @@ export default Register;
 
 
 
+
 ############################################################
 FILE: frontend\src\pages\RoleSelectionPage.jsx
 ############################################################
 
 import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import API from "../services/api";
 
 function RoleSelectionPage() {
+  useEffect(() => {
+    API.post("/analytics/visit").catch(() => {});
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center">
       {/* ===== HERO / INTRO ===== */}
@@ -5708,6 +6012,7 @@ function RoleSelectionPage() {
 }
 
 export default RoleSelectionPage;
+
 
 
 
@@ -5898,6 +6203,7 @@ export default TaskDetails;
 
 
 
+
 ############################################################
 FILE: frontend\src\pages\Tasks.jsx
 ############################################################
@@ -5993,6 +6299,7 @@ function Tasks() {
 }
 
 export default Tasks;
+
 
 
 
@@ -6125,6 +6432,7 @@ export default Terms;
 
 
 
+
 ############################################################
 FILE: frontend\src\services\api.js
 ############################################################
@@ -6146,6 +6454,7 @@ API.interceptors.request.use((config) => {
 export default API;
 
 
+
 ############################################################
 FILE: frontend\tailwind.config.js
 ############################################################
@@ -6155,6 +6464,7 @@ export default {
   theme: { extend: {} },
   plugins: [],
 }
+
 
 
 

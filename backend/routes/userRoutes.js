@@ -8,16 +8,40 @@ const {
   deleteUserAdmin,
 } = require("../controllers/userController");
 
+const { protect } = require("../middleware/authMiddleware");
+const { restrictTo } = require("../middleware/roleMiddleware");
+
 /* =========================
-   PUBLIC
+   PUBLIC ROUTES
 ========================= */
 router.get("/freelancer/:id", getFreelancerProfile);
 
 /* =========================
-   ADMIN ROUTES
+   ADMIN ROUTES (SECURED)
 ========================= */
-router.get("/admin/all", getAllUsersAdmin);
-router.patch("/admin/role/:id", changeUserRole);
-router.delete("/admin/:id", deleteUserAdmin);
+
+// Get all users
+router.get(
+  "/admin/all",
+  protect,
+  restrictTo("admin"),
+  getAllUsersAdmin
+);
+
+// Change user role
+router.patch(
+  "/admin/role/:id",
+  protect,
+  restrictTo("admin"),
+  changeUserRole
+);
+
+// Delete user
+router.delete(
+  "/admin/:id",
+  protect,
+  restrictTo("admin"),
+  deleteUserAdmin
+);
 
 module.exports = router;

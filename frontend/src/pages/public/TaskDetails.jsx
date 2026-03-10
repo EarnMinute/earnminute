@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import API from "../services/api";
-import { useAuth } from "../context/AuthContext";
+import API from "../../services/api";
+import { useAuth } from "../../context/AuthContext";
 
 function TaskDetails() {
   const { id } = useParams();

@@ -3,43 +3,43 @@ const taskService = require("../services/taskService");
 /* ===============================
    CREATE TASK
 ================================ */
-exports.createTask = async (req, res) => {
-
+const createTask = async (req, res) => {
   try {
-
     const task = await taskService.createTask(req.user._id, req.body);
 
     res.status(201).json({
-      message: "Task created successfully",
+      success: true,
       task
     });
 
   } catch (error) {
 
-    res.status(500).json({
+    res.status(400).json({
+      success: false,
       message: error.message
     });
 
   }
-
 };
 
 /* ===============================
-   GET ALL TASKS
+   GET ALL TASKS (WITH SEARCH)
 ================================ */
-exports.getAllTasks = async (req, res) => {
+const getAllTasks = async (req, res) => {
 
   try {
 
-    const page = req.query.page ? Number(req.query.page) : null;
+    const tasks = await taskService.getAllTasks(req.query);
 
-    const tasks = await taskService.getAllTasks(page);
-
-    res.status(200).json(tasks);
+    res.json({
+      success: true,
+      data: tasks
+    });
 
   } catch (error) {
 
     res.status(500).json({
+      success: false,
       message: error.message
     });
 
@@ -50,17 +50,21 @@ exports.getAllTasks = async (req, res) => {
 /* ===============================
    EMPLOYER DASHBOARD
 ================================ */
-exports.getEmployerDashboard = async (req, res) => {
+const getEmployerDashboard = async (req, res) => {
 
   try {
 
     const dashboard = await taskService.getEmployerDashboard(req.user._id);
 
-    res.status(200).json(dashboard);
+    res.json({
+      success: true,
+      dashboard
+    });
 
   } catch (error) {
 
     res.status(500).json({
+      success: false,
       message: error.message
     });
 
@@ -71,19 +75,21 @@ exports.getEmployerDashboard = async (req, res) => {
 /* ===============================
    COMPLETE TASK
 ================================ */
-exports.completeTask = async (req, res) => {
+const completeTask = async (req, res) => {
 
   try {
 
-    await taskService.completeTask(req.params.taskId);
+    const task = await taskService.completeTask(req.params.id);
 
-    res.status(200).json({
-      message: "Task marked as completed"
+    res.json({
+      success: true,
+      task
     });
 
   } catch (error) {
 
     res.status(400).json({
+      success: false,
       message: error.message
     });
 
@@ -94,32 +100,28 @@ exports.completeTask = async (req, res) => {
 /* ===============================
    RATE FREELANCER
 ================================ */
-exports.rateFreelancer = async (req, res) => {
+const rateFreelancer = async (req, res) => {
 
   try {
 
     const { rating, review } = req.body;
 
-    if (!rating || rating < 1 || rating > 5) {
-      return res.status(400).json({
-        message: "Rating must be between 1 and 5"
-      });
-    }
-
-    await taskService.rateFreelancer(
-      req.params.taskId,
+    const task = await taskService.rateFreelancer(
+      req.params.id,
       req.user._id,
       rating,
       review
     );
 
-    res.status(200).json({
-      message: "Rating submitted successfully"
+    res.json({
+      success: true,
+      task
     });
 
   } catch (error) {
 
     res.status(400).json({
+      success: false,
       message: error.message
     });
 
@@ -130,7 +132,7 @@ exports.rateFreelancer = async (req, res) => {
 /* ===============================
    ADMIN GET TASKS
 ================================ */
-exports.getAllTasksAdmin = async (req, res) => {
+const getAllTasksAdmin = async (req, res) => {
 
   try {
 
@@ -138,11 +140,15 @@ exports.getAllTasksAdmin = async (req, res) => {
 
     const tasks = await taskService.getAllTasksAdmin(page);
 
-    res.status(200).json(tasks);
+    res.json({
+      success: true,
+      data: tasks
+    });
 
   } catch (error) {
 
     res.status(500).json({
+      success: false,
       message: error.message
     });
 
@@ -151,24 +157,36 @@ exports.getAllTasksAdmin = async (req, res) => {
 };
 
 /* ===============================
-   DELETE TASK
+   DELETE TASK (ADMIN)
 ================================ */
-exports.deleteTaskAdmin = async (req, res) => {
+const deleteTask = async (req, res) => {
 
   try {
 
     await taskService.deleteTask(req.params.id);
 
-    res.status(200).json({
-      message: "Task deleted successfully"
+    res.json({
+      success: true,
+      message: "Task deleted"
     });
 
   } catch (error) {
 
     res.status(400).json({
+      success: false,
       message: error.message
     });
 
   }
 
+};
+
+module.exports = {
+  createTask,
+  getAllTasks,
+  getEmployerDashboard,
+  completeTask,
+  rateFreelancer,
+  getAllTasksAdmin,
+  deleteTask
 };

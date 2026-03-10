@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import API from "../services/api";
-import RatingModal from "../components/RatingModal";
+import API from "../../services/api";
+import RatingModal from "../../components/RatingModal";
 import { Link } from "react-router-dom";
 
 function EmployerDashboard() {
@@ -23,10 +23,12 @@ function EmployerDashboard() {
     try {
       const res = await API.get("/tasks/employer/dashboard");
 
+      const data = res.data.dashboard || {};
+
       setDashboard({
-        open: res.data.open || [],
-        assigned: res.data.assigned || [],
-        completed: res.data.completed || [],
+        open: data.open || [],
+        assigned: data.assigned || [],
+        completed: data.completed || [],
       });
     } catch (error) {
       console.error("Dashboard error:", error);

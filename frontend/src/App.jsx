@@ -3,26 +3,32 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
 
-import RoleSelectionPage from "./pages/RoleSelectionPage";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import EmployerDashboard from "./pages/EmployerDashboard";
-import FreelancerDashboard from "./pages/FreelancerDashboard";
-import PostTask from "./pages/PostTask";
-import Forbidden from "./pages/Forbidden";
-import NotFound from "./pages/NotFound";
-import Terms from "./pages/Terms";
-import Privacy from "./pages/Privacy";
-import Tasks from "./pages/Tasks";
-import TaskDetails from "./pages/TaskDetails";
-import FreelancerProfile from "./pages/FreelancerProfile";
-import GuestEmployerPage from "./pages/GuestEmployerPage";
-import GuestFreelancerPage from "./pages/GuestFreelancerPage";
-import FeedbackPage from "./pages/FeedbackPage";
-import AdminDashboard from "./pages/AdminDashboard";
-import AdminUsers from "./pages/AdminUsers";
-import AdminTasks from "./pages/AdminTasks";
-import AdminAnalytics from "./pages/AdminAnalytics";
+import RoleSelectionPage from "./pages/auth/RoleSelectionPage";
+import Login from "./pages/auth/Login";
+import Register from "./pages/auth/Register";
+
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminTasks from "./pages/admin/AdminTasks";
+import AdminAnalytics from "./pages/admin/AdminAnalytics";
+
+import EmployerDashboard from "./pages/employer/EmployerDashboard";
+import PostTask from "./pages/employer/PostTask";
+
+import FreelancerDashboard from "./pages/freelancer/FreelancerDashboard";
+
+import Tasks from "./pages/public/Tasks";
+import TaskDetails from "./pages/public/TaskDetails";
+import FreelancerProfile from "./pages/public/FreelancerProfile";
+import GuestEmployerPage from "./pages/public/GuestEmployerPage";
+import GuestFreelancerPage from "./pages/public/GuestFreelancerPage";
+import FeedbackPage from "./pages/public/FeedbackPage";
+
+import Terms from "./pages/legal/Terms";
+import Privacy from "./pages/legal/Privacy";
+
+import Forbidden from "./pages/misc/Forbidden";
+import NotFound from "./pages/misc/NotFound";
 
 function App() {
   return (

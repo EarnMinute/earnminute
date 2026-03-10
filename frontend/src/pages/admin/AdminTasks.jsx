@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import API from "../services/api";
-import AdminLayout from "../components/AdminLayout";
+import API from "../../services/api";
+import AdminLayout from "../../components/AdminLayout";
 
 function AdminTasks() {
   const [activeTab, setActiveTab] = useState("all");

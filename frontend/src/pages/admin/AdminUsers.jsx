@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import API from "../services/api";
-import AdminLayout from "../components/AdminLayout";
+import API from "../../services/api";
+import AdminLayout from "../../components/AdminLayout";
 
 function AdminUsers() {
   const queryClient = useQueryClient();

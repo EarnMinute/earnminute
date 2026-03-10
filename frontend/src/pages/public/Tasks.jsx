@@ -1,21 +1,53 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import API from "../services/api";
+import API from "../../services/api";
 
 function Tasks() {
   const [tasks, setTasks] = useState([]);
+  const [search, setSearch] = useState("");
+  const [skill, setSkill] = useState("");
+  const [minBudget, setMinBudget] = useState("");
+  const [maxBudget, setMaxBudget] = useState("");
 
   useEffect(() => {
     fetchTasks();
   }, []);
 
+  const buildQuery = () => {
+    const params = new URLSearchParams();
+
+    if (search) params.append("search", search);
+    if (skill) params.append("skill", skill);
+    if (minBudget) params.append("minBudget", minBudget);
+    if (maxBudget) params.append("maxBudget", maxBudget);
+
+    return params.toString();
+  };
+
   const fetchTasks = async () => {
     try {
-      const res = await API.get("/tasks");
-      setTasks(res.data);
+      const query = buildQuery();
+      const url = query ? `/tasks?${query}` : "/tasks";
+
+      const res = await API.get(url);
+
+      const data = res.data.data;
+
+      if (Array.isArray(data)) {
+        setTasks(data);
+      } else if (data.tasks) {
+        setTasks(data.tasks);
+      } else {
+        setTasks([]);
+      }
     } catch (err) {
       console.error("Failed to load tasks");
     }
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    fetchTasks();
   };
 
   return (
@@ -28,6 +60,51 @@ function Tasks() {
             Find tasks that match your skills and start earning today.
           </p>
         </div>
+
+        {/* SEARCH / FILTER */}
+        <form
+          onSubmit={handleSearch}
+          className="bg-white rounded-xl shadow-md p-6 mb-10 grid md:grid-cols-5 gap-4"
+        >
+          <input
+            type="text"
+            placeholder="Name"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="border rounded-lg px-3 py-2"
+          />
+
+          <input
+            type="text"
+            placeholder="Skill"
+            value={skill}
+            onChange={(e) => setSkill(e.target.value)}
+            className="border rounded-lg px-3 py-2"
+          />
+
+          <input
+            type="number"
+            placeholder="Min Budget"
+            value={minBudget}
+            onChange={(e) => setMinBudget(e.target.value)}
+            className="border rounded-lg px-3 py-2"
+          />
+
+          <input
+            type="number"
+            placeholder="Max Budget"
+            value={maxBudget}
+            onChange={(e) => setMaxBudget(e.target.value)}
+            className="border rounded-lg px-3 py-2"
+          />
+
+          <button
+            type="submit"
+            className="bg-blue-900 text-white rounded-lg px-4 py-2 hover:bg-blue-800 transition"
+          >
+            Search
+          </button>
+        </form>
 
         {/* TASK LIST */}
         {tasks.length === 0 ? (

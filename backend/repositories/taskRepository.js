@@ -25,6 +25,41 @@ const getAllOpenTasks = async () => {
 };
 
 /* ===============================
+   SEARCH TASKS (NEW FEATURE)
+================================ */
+const searchTasks = async (filters) => {
+  const query = {
+    status: "open",
+    isDeleted: { $ne: true },
+  };
+
+  if (filters.search) {
+    query.$or = [
+      { title: { $regex: filters.search, $options: "i" } },
+      { description: { $regex: filters.search, $options: "i" } },
+    ];
+  }
+
+  if (filters.skill) {
+    query.skills = { $in: [filters.skill] };
+  }
+
+  if (filters.minBudget || filters.maxBudget) {
+    query.budgetAmount = {};
+
+    if (filters.minBudget) {
+      query.budgetAmount.$gte = Number(filters.minBudget);
+    }
+
+    if (filters.maxBudget) {
+      query.budgetAmount.$lte = Number(filters.maxBudget);
+    }
+  }
+
+  return Task.find(query).sort({ createdAt: -1 });
+};
+
+/* ===============================
    GET EMPLOYER TASKS
 ================================ */
 const getEmployerTasks = async (employerId) => {
@@ -57,19 +92,18 @@ const getAllTasksAdmin = async () => {
    INCREMENT APPLICATION COUNT
 ================================ */
 const incrementApplicationsCount = async (taskId) => {
-
   return Task.findByIdAndUpdate(
     taskId,
     { $inc: { applicationsCount: 1 } },
     { new: true }
   );
-
 };
 
 module.exports = {
   createTask,
   findById,
   getAllOpenTasks,
+  searchTasks,
   getEmployerTasks,
   saveTask,
   getAllTasksAdmin,
