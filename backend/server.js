@@ -88,10 +88,10 @@ app.use(mongoSanitize());
 /* ===============================
 CORS
 ================================ */
-const allowedOrigins =
-process.env.NODE_ENV === "production"
-? ["[https://earnminute.vercel.app](https://earnminute.vercel.app)"]
-: ["http://localhost:5173"];
+const allowedOrigins = [
+"http://localhost:5173",
+"https://earnminute.vercel.app"
+];
 
 app.use(
 cors({
