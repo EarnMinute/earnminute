@@ -10,6 +10,7 @@ function Navbar() {
   const location = useLocation();
 
   const [unreadCount, setUnreadCount] = useState(0);
+  const [chatUnread, setChatUnread] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
 
   const notificationRef = useRef(null);
@@ -34,35 +35,49 @@ function Navbar() {
   const isEmployerPage = location.pathname.startsWith("/employers");
   const isFreelancerPage = location.pathname.startsWith("/freelancers");
 
-  /* ===============================
-FETCH UNREAD COUNT
-=============================== */
-
   const fetchUnreadCount = async () => {
     try {
       const res = await API.get("/notifications/unread-count");
-
       setUnreadCount(res.data.unreadCount || 0);
     } catch (error) {
       console.error("Unread count fetch error:", error);
+    }
+  };
+  const fetchChatUnread = async () => {
+    if (!user) return;
+
+    try {
+      const res = await API.get("/chat/conversations");
+
+      const conversations = res?.data?.conversations || [];
+
+      let total = 0;
+
+      for (const conv of conversations) {
+        if (conv.unreadCount) {
+          total += conv.unreadCount;
+        }
+      }
+
+      setChatUnread(total);
+    } catch (err) {
+      console.error("Chat unread fetch error:", err);
     }
   };
 
   useEffect(() => {
     if (user) {
       fetchUnreadCount();
+      fetchChatUnread();
 
       const interval = setInterval(() => {
         fetchUnreadCount();
+        fetchChatUnread();
       }, 30000);
 
       return () => clearInterval(interval);
     }
   }, [user]);
-
-  /* ===============================
-CLOSE DROPDOWN ON OUTSIDE CLICK
-=============================== */
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -81,19 +96,21 @@ CLOSE DROPDOWN ON OUTSIDE CLICK
     };
   }, []);
 
+  useEffect(() => {
+    if (location.pathname === "/messages") {
+      fetchChatUnread();
+    }
+  }, [location.pathname]);
+
   return (
     <nav className="bg-white border-b shadow-sm">
       <div className="max-w-6xl mx-auto px-6">
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-
           <Link to="/" className="text-2xl font-bold text-blue-900">
             Earn<span className="text-orange-500">Minute</span>
           </Link>
 
           <div className="hidden md:flex items-center gap-8">
-            {/* Browse Tasks */}
-
             {(isFreelancerPage || !user) && (
               <Link
                 to="/tasks"
@@ -102,8 +119,6 @@ CLOSE DROPDOWN ON OUTSIDE CLICK
                 Browse Tasks
               </Link>
             )}
-
-            {/* Post Task */}
 
             {(isEmployerPage || user?.user?.role === "employer") && (
               <Link
@@ -116,8 +131,6 @@ CLOSE DROPDOWN ON OUTSIDE CLICK
 
             {user ? (
               <>
-                {/* Dashboard */}
-
                 <Link
                   to={getDashboardLink()}
                   className="text-gray-600 hover:text-blue-900 font-medium transition"
@@ -125,7 +138,14 @@ CLOSE DROPDOWN ON OUTSIDE CLICK
                   Dashboard
                 </Link>
 
-                {/* Notification Bell */}
+                <Link to="/messages" className="text-xl relative">
+                  💬
+                  {chatUnread > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                      {chatUnread}
+                    </span>
+                  )}
+                </Link>
 
                 <div className="relative" ref={notificationRef}>
                   <button
@@ -149,8 +169,6 @@ CLOSE DROPDOWN ON OUTSIDE CLICK
                     />
                   )}
                 </div>
-
-                {/* User Badge */}
 
                 <div className="flex items-center gap-3">
                   <span className="bg-blue-100 text-blue-900 px-3 py-1 rounded-full text-sm font-medium">
@@ -183,8 +201,6 @@ CLOSE DROPDOWN ON OUTSIDE CLICK
               </>
             )}
           </div>
-
-          {/* Mobile Menu */}
 
           <div className="md:hidden text-gray-700 text-xl">☰</div>
         </div>

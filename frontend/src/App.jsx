@@ -27,14 +27,16 @@ import FeedbackPage from "./pages/public/FeedbackPage";
 import Terms from "./pages/legal/Terms";
 import Privacy from "./pages/legal/Privacy";
 
+import Messages from "./pages/misc/Messages";
+
 import Forbidden from "./pages/misc/Forbidden";
 import NotFound from "./pages/misc/NotFound";
 
 function App() {
   return (
     <div className="flex flex-col min-h-screen">
+      {" "}
       <Navbar />
-
       <div className="flex-grow">
         <Routes>
           <Route path="/" element={<RoleSelectionPage />} />
@@ -75,6 +77,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/employer/dashboard"
             element={
@@ -101,20 +104,32 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          <Route
+            path="/messages"
+            element={
+              <ProtectedRoute>
+                <Messages />
+              </ProtectedRoute>
+            }
+          />
+
           <Route
             path="/freelancer/profile/:id"
             element={<FreelancerProfile />}
           />
+
           <Route path="/tasks" element={<Tasks />} />
           <Route path="/task/:id" element={<TaskDetails />} />
+
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/feedback" element={<FeedbackPage />} />
+
           <Route path="/403" element={<Forbidden />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
-
       <Footer />
     </div>
   );
