@@ -1,0 +1,234 @@
+PROJECT NAME
+EarnMinute
+
+PROJECT TYPE
+Full-stack freelance micro-task marketplace (similar concept to Fiverr/Upwork but simplified).
+
+TECH STACK
+
+Backend
+Node.js
+Express.js
+MongoDB
+Mongoose
+JWT Authentication
+
+Security implemented
+Helmet
+Rate Limiting
+Mongo Sanitization
+CORS restrictions
+
+Frontend
+React (Vite)
+React Router
+TailwindCSS
+TanStack React Query
+
+Hosting plan
+Backend → Render
+Frontend → Vercel
+
+---
+
+PROJECT ARCHITECTURE
+
+Backend structure
+
+backend/
+controllers/
+services/
+repositories/
+models/
+routes/
+middleware/
+server.js
+
+Service layer architecture is used:
+
+Controller → Service → Repository → Database
+
+Repositories handle DB queries.
+Services handle business logic.
+
+---
+
+MAIN USER ROLES
+
+Admin
+Employer
+Freelancer
+
+---
+
+FEATURES IMPLEMENTED
+
+Authentication
+Register
+Login
+JWT auth
+Role-based access control
+
+Task system
+Employer can create tasks
+Freelancers can browse tasks
+Freelancers can apply to tasks
+Employer can assign freelancer
+Employer can mark task completed
+Employer can rate freelancer
+
+Applications system
+Application status:
+applied
+assigned
+rejected
+
+Dashboards
+Admin dashboard
+Employer dashboard
+Freelancer dashboard
+
+Notifications system
+Notification model
+Notifications created for:
+application received
+task assigned
+task completed
+rating received
+
+Notification features
+Unread notification badge
+Dropdown notification panel
+Pagination
+Infinite scroll
+Mark single notification read
+Mark all notifications read
+
+Admin system
+Admin user management
+Admin task moderation
+Admin analytics
+
+Pagination implemented
+Tasks list
+Admin tasks
+Admin users
+Notifications
+
+---
+
+DATABASE MODELS
+
+User
+Task
+Application
+Notification
+
+Task statuses
+open
+assigned
+completed
+
+Application statuses
+applied
+assigned
+rejected
+
+---
+
+CURRENT FRONTEND STRUCTURE
+
+frontend/src/
+
+pages/
+admin/
+employer/
+freelancer/
+public/
+legal/
+misc/
+
+components/
+Navbar.jsx
+NotificationDropdown.jsx
+RatingModal.jsx
+AdminLayout.jsx
+
+services/
+api.js
+
+context/
+AuthContext.jsx
+
+---
+
+IMPORTANT DEVELOPMENT RULES
+
+Always analyze the full codebase before modifying anything.
+
+Before editing code:
+
+1. Ask which file is needed
+2. After receiving the file
+3. Return the FULL updated file
+4. Do NOT send snippets
+5. Do NOT break existing features
+
+Maintain existing architecture:
+Controller → Service → Repository
+
+Never change logic unless necessary.
+
+Always maintain backward compatibility.
+
+---
+
+CURRENT SYSTEM STATUS
+
+Fully working marketplace flow.
+
+Working features:
+
+Task creation
+Applications
+Freelancer assignment
+Task completion
+Freelancer rating
+Notifications
+Admin moderation
+Pagination
+Infinite scroll notifications
+
+Navbar notification system
+Bell icon
+Unread count
+Dropdown
+Infinite scroll
+Pagination
+Mark read
+Close on outside click
+
+---
+
+CURRENT DEVELOPMENT TARGET
+
+Add real-time notifications using Socket.IO.
+
+Requirements
+
+Must work with:
+Render backend
+Vercel frontend
+
+Must NOT break existing polling system.
+
+Socket system must:
+emit notification events
+update bell badge instantly
+update dropdown instantly
+
+Fallback polling must remain.
+
+---
+
+END OF PROJECT CONTEXT

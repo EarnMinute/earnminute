@@ -13,17 +13,36 @@ const createNotification = async ({ user, type, message, link }) => {
 };
 
 /* ===============================
-   GET USER NOTIFICATIONS
+GET USER NOTIFICATIONS (PAGINATED)
 ================================ */
-const getNotifications = async (userId) => {
-  const notifications = await notificationRepository.getUserNotifications(userId);
-  const unreadCount = await notificationRepository.countUnreadNotifications(userId);
+const getNotifications = async (userId, page = 1) => {
 
-  return {
-    notifications,
-    unreadCount,
-  };
+const limit = 10;
+const skip = (page - 1) * limit;
+
+const notifications =
+await notificationRepository.getUserNotificationsPaginated(
+userId,
+skip,
+limit
+);
+
+const totalNotifications =
+await notificationRepository.countNotifications(userId);
+
+const unreadCount =
+await notificationRepository.countUnreadNotifications(userId);
+
+return {
+page,
+totalPages: Math.ceil(totalNotifications / limit),
+totalNotifications,
+unreadCount,
+notifications,
 };
+
+};
+
 
 /* ===============================
    MARK SINGLE NOTIFICATION READ

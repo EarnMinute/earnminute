@@ -8,22 +8,33 @@ function AdminTasks() {
   const [activeTab, setActiveTab] = useState("all");
   const [selectedTask, setSelectedTask] = useState(null);
 
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
   const queryClient = useQueryClient();
 
   const fetchTasks = async () => {
-    const res = await API.get("/tasks/admin/all");
+    const res = await API.get(`/tasks/admin/all?page=${page}`);
 
     // Normalize response
     const data = res.data?.data;
 
-    if (Array.isArray(data)) return data;
-    if (data?.tasks) return data.tasks;
+    if (Array.isArray(data)) {
+      setTotalPages(1);
+      return data;
+    }
 
+    if (data?.tasks) {
+      setTotalPages(data.totalPages || 1);
+      return data.tasks;
+    }
+
+    setTotalPages(1);
     return [];
   };
 
   const { data: tasks = [], isLoading } = useQuery({
-    queryKey: ["adminTasks"],
+    queryKey: ["adminTasks", page],
     queryFn: fetchTasks,
   });
 
@@ -62,7 +73,10 @@ function AdminTasks() {
           {["all", "open", "assigned", "completed"].map((tab) => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab)}
+              onClick={() => {
+                setActiveTab(tab);
+                setPage(1);
+              }}
               className={`px-4 py-2 rounded-lg ${
                 activeTab === tab ? "bg-blue-900 text-white" : "bg-gray-200"
               }`}
@@ -134,6 +148,28 @@ function AdminTasks() {
               ))}
             </tbody>
           </table>
+        </div>
+
+        <div className="flex justify-center items-center gap-6 mt-8">
+          <button
+            onClick={() => setPage((p) => Math.max(p - 1, 1))}
+            disabled={page === 1}
+            className="px-4 py-2 bg-gray-200 rounded disabled:opacity-40"
+          >
+            Prev
+          </button>
+
+          <span className="font-medium">
+            Page {page} of {totalPages}
+          </span>
+
+          <button
+            onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
+            disabled={page === totalPages}
+            className="px-4 py-2 bg-gray-200 rounded disabled:opacity-40"
+          >
+            Next
+          </button>
         </div>
 
         {/* APPLICATION MODAL */}

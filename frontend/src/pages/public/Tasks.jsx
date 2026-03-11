@@ -4,17 +4,22 @@ import API from "../../services/api";
 
 function Tasks() {
   const [tasks, setTasks] = useState([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
   const [search, setSearch] = useState("");
   const [skill, setSkill] = useState("");
   const [minBudget, setMinBudget] = useState("");
   const [maxBudget, setMaxBudget] = useState("");
 
   useEffect(() => {
-    fetchTasks();
-  }, []);
+    fetchTasks(page);
+  }, [page]);
 
   const buildQuery = () => {
     const params = new URLSearchParams();
+
+    params.append("page", page);
 
     if (search) params.append("search", search);
     if (skill) params.append("skill", skill);
@@ -27,18 +32,16 @@ function Tasks() {
   const fetchTasks = async () => {
     try {
       const query = buildQuery();
-      const url = query ? `/tasks?${query}` : "/tasks";
-
-      const res = await API.get(url);
+      const res = await API.get(`/tasks?${query}`);
 
       const data = res.data.data;
 
       if (Array.isArray(data)) {
         setTasks(data);
-      } else if (data.tasks) {
-        setTasks(data.tasks);
+        setTotalPages(1);
       } else {
-        setTasks([]);
+        setTasks(data.tasks || []);
+        setTotalPages(data.totalPages || 1);
       }
     } catch (err) {
       console.error("Failed to load tasks");
@@ -47,13 +50,27 @@ function Tasks() {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    fetchTasks();
+    setPage(1);
+    fetchTasks(1);
+  };
+
+  const nextPage = () => {
+    if (page < totalPages) {
+      setPage((p) => p + 1);
+    }
+  };
+
+  const prevPage = () => {
+    if (page > 1) {
+      setPage((p) => p - 1);
+    }
   };
 
   return (
     <div className="bg-gray-50 min-h-screen py-16 px-6">
+      {" "}
       <div className="max-w-6xl mx-auto">
-        {/* PAGE HEADER */}
+        {/* HEADER */}
         <div className="mb-12">
           <h1>Browse Tasks</h1>
           <p className="text-gray-500 mt-2">
@@ -61,7 +78,7 @@ function Tasks() {
           </p>
         </div>
 
-        {/* SEARCH / FILTER */}
+        {/* SEARCH */}
         <form
           onSubmit={handleSearch}
           className="bg-white rounded-xl shadow-md p-6 mb-10 grid md:grid-cols-5 gap-4"
@@ -119,22 +136,18 @@ function Tasks() {
                 className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition flex flex-col justify-between"
               >
                 <div>
-                  {/* TITLE */}
                   <h3 className="text-lg font-semibold text-blue-900 mb-2">
                     {task.title}
                   </h3>
 
-                  {/* BUDGET */}
                   <p className="text-green-600 font-semibold mb-3">
                     ৳ {task.budgetAmount}
                   </p>
 
-                  {/* DESCRIPTION */}
                   <p className="text-gray-500 text-sm mb-4 leading-relaxed">
                     {task.description?.slice(0, 100)}...
                   </p>
 
-                  {/* SKILLS */}
                   {task.skills && task.skills.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-5">
                       {task.skills.slice(0, 3).map((skill, index) => (
@@ -149,7 +162,6 @@ function Tasks() {
                   )}
                 </div>
 
-                {/* BUTTON */}
                 <Link
                   to={`/task/${task._id}`}
                   className="mt-auto inline-block bg-blue-900 text-white text-center px-4 py-2 rounded-lg hover:bg-blue-800 transition"
@@ -160,6 +172,29 @@ function Tasks() {
             ))}
           </div>
         )}
+
+        {/* PAGINATION */}
+        <div className="flex justify-center items-center gap-6 mt-12">
+          <button
+            onClick={prevPage}
+            disabled={page === 1}
+            className="px-4 py-2 bg-gray-200 rounded disabled:opacity-40"
+          >
+            Prev
+          </button>
+
+          <span className="font-medium">
+            Page {page} of {totalPages}
+          </span>
+
+          <button
+            onClick={nextPage}
+            disabled={page === totalPages}
+            className="px-4 py-2 bg-gray-200 rounded disabled:opacity-40"
+          >
+            Next
+          </button>
+        </div>
       </div>
     </div>
   );

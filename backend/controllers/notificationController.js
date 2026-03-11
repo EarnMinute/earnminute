@@ -1,113 +1,125 @@
 const notificationService = require("../services/notificationService");
 
 /* ===============================
-   GET USER NOTIFICATIONS
+GET USER NOTIFICATIONS (PAGINATED)
 ================================ */
 const getNotifications = async (req, res) => {
-  try {
-    const userId = req.user._id;
+try {
 
-    const data = await notificationService.getNotifications(userId);
+const userId = req.user._id;
+const page = req.query.page ? Number(req.query.page) : 1;
 
-    res.json({
-      success: true,
-      notifications: data.notifications,
-      unreadCount: data.unreadCount,
-    });
+const data = await notificationService.getNotifications(userId, page);
 
-  } catch (error) {
-    console.error("Notifications fetch error:", error);
+res.json({
+  success: true,
+  page: data.page,
+  totalPages: data.totalPages,
+  totalNotifications: data.totalNotifications,
+  unreadCount: data.unreadCount,
+  notifications: data.notifications,
+});
 
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch notifications",
-    });
-  }
+} catch (error) {
+
+console.error("Notifications fetch error:", error);
+
+res.status(500).json({
+  success: false,
+  message: "Failed to fetch notifications",
+});
+
+}
 };
 
-
 /* ===============================
-   GET UNREAD COUNT
+GET UNREAD COUNT
 ================================ */
 const getUnreadCount = async (req, res) => {
-  try {
-    const userId = req.user._id;
+try {
 
-    const count = await notificationService.getUnreadCount(userId);
+const userId = req.user._id;
 
-    res.json({
-      success: true,
-      unreadCount: count,
-    });
+const count = await notificationService.getUnreadCount(userId);
 
-  } catch (error) {
-    console.error("Unread count error:", error);
+res.json({
+  success: true,
+  unreadCount: count,
+});
 
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch unread count",
-    });
-  }
+} catch (error) {
+
+console.error("Unread count error:", error);
+
+res.status(500).json({
+  success: false,
+  message: "Failed to fetch unread count",
+});
+
+}
 };
 
-
 /* ===============================
-   MARK SINGLE NOTIFICATION READ
+MARK SINGLE NOTIFICATION READ
 ================================ */
 const markNotificationRead = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const notificationId = req.params.id;
+try {
 
-    const notification = await notificationService.markNotificationRead(
-      notificationId,
-      userId
-    );
+const userId = req.user._id;
+const notificationId = req.params.id;
 
-    res.json({
-      success: true,
-      notification,
-    });
+const notification = await notificationService.markNotificationRead(
+  notificationId,
+  userId
+);
 
-  } catch (error) {
-    console.error("Mark notification read error:", error);
+res.json({
+  success: true,
+  notification,
+});
 
-    res.status(500).json({
-      success: false,
-      message: "Failed to mark notification as read",
-    });
-  }
+} catch (error) {
+
+console.error("Mark notification read error:", error);
+
+res.status(500).json({
+  success: false,
+  message: "Failed to mark notification as read",
+});
+
+}
 };
-
 
 /* ===============================
-   MARK ALL NOTIFICATIONS READ
+MARK ALL NOTIFICATIONS READ
 ================================ */
 const markAllNotificationsRead = async (req, res) => {
-  try {
-    const userId = req.user._id;
+try {
 
-    await notificationService.markAllNotificationsRead(userId);
+const userId = req.user._id;
 
-    res.json({
-      success: true,
-      message: "All notifications marked as read",
-    });
+await notificationService.markAllNotificationsRead(userId);
 
-  } catch (error) {
-    console.error("Mark all notifications read error:", error);
+res.json({
+  success: true,
+  message: "All notifications marked as read",
+});
 
-    res.status(500).json({
-      success: false,
-      message: "Failed to mark all notifications as read",
-    });
-  }
+} catch (error) {
+
+console.error("Mark all notifications read error:", error);
+
+res.status(500).json({
+  success: false,
+  message: "Failed to mark all notifications as read",
+});
+
+}
 };
 
-
 module.exports = {
-  getNotifications,
-  getUnreadCount,
-  markNotificationRead,
-  markAllNotificationsRead,
+getNotifications,
+getUnreadCount,
+markNotificationRead,
+markAllNotificationsRead,
 };
