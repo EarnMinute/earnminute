@@ -168,40 +168,75 @@ export default function ChatWindow({ conversation }) {
       </div>
 
       <div ref={messagesRef} className="flex-1 overflow-y-auto p-4 space-y-3">
-        {messages.map((msg) => {
-          const isMine = msg.sender?._id === currentUserId;
+        {messages.map((msg, index) => {
+          const senderId =
+            typeof msg.sender === "object" ? msg.sender._id : msg.sender;
+
+          const prev = messages[index - 1];
+
+          const prevSenderId =
+            prev && typeof prev.sender === "object"
+              ? prev.sender._id
+              : prev?.sender;
+
+          const isGrouped = prevSenderId === senderId;
+
+          const next = messages[index + 1];
+
+          const nextSenderId =
+            next && typeof next.sender === "object"
+              ? next.sender._id
+              : next?.sender;
+
+          const isLastInGroup = nextSenderId !== senderId;
+
+          const isMine = senderId === currentUserId;
 
           return (
             <div
               key={msg._id}
-              className={`flex ${isMine ? "justify-end" : "justify-start"}`}
+              className={`flex ${isMine ? "justify-end" : "justify-start"} ${
+                isGrouped ? "mt-1" : "mt-4"
+              }`}
             >
-              <div className="flex flex-col max-w-xs">
+              <div className="flex flex-col max-w-[70%]">
                 <div
-                  className={`px-4 py-2 rounded-lg text-sm ${
+                  className={`px-4 py-2 text-sm ${
                     isMine
                       ? "bg-blue-600 text-white"
                       : "bg-gray-200 text-gray-800"
-                  }`}
+                  }
+                    ${
+                      isMine
+                        ? isGrouped
+                          ? "rounded-l-lg rounded-tr-lg"
+                          : "rounded-lg"
+                        : isGrouped
+                          ? "rounded-r-lg rounded-tl-lg"
+                          : "rounded-lg"
+                    }
+                  `}
                 >
                   {msg.content}
                 </div>
 
-                <div className="flex items-center gap-2 text-xs text-gray-400 mt-1">
-                  <span>
-                    {new Date(msg.createdAt).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
+                {isLastInGroup && (
+                  <div className="flex items-center gap-2 text-xs text-gray-400 mt-1">
+                    <span>
+                      {new Date(msg.createdAt).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
 
-                  {msg.status === "sending" && <span>⏳</span>}
-                  {msg.status === "sent" && <span>✓</span>}
-                  {msg.status === "delivered" && <span>✓✓</span>}
-                  {msg.status === "failed" && (
-                    <span className="text-red-500">!</span>
-                  )}
-                </div>
+                    {msg.status === "sending" && <span>⏳</span>}
+                    {msg.status === "sent" && <span>✓</span>}
+                    {msg.status === "delivered" && <span>✓✓</span>}
+                    {msg.status === "failed" && (
+                      <span className="text-red-500">!</span>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           );
