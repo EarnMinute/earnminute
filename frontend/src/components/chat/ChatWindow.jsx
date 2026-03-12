@@ -31,37 +31,43 @@ export default function ChatWindow({ conversation }) {
 
     joinConversation(conversation._id);
 
-    const handler = (message) => {
+    const socket = getSocket();
+
+    const messageHandler = (message) => {
       if (message.conversation === conversation._id) {
         setMessages((prev) => [...prev, message]);
       }
     };
 
-    onNewMessage(handler);
+    const typingHandler = (data) => {
+      if (
+        data.conversationId === conversation._id &&
+        data.userId !== currentUserId
+      ) {
+        setTypingUser(data.name);
 
-    const socket = getSocket();
+        clearTimeout(typingTimeout.current);
+
+        typingTimeout.current = setTimeout(() => {
+          setTypingUser(null);
+        }, 2000);
+      }
+    };
 
     if (socket) {
-      socket.on("chat:typing", (data) => {
-        if (
-          data.conversationId === conversation._id &&
-          data.userId !== currentUserId
-        ) {
-          setTypingUser(data.name);
-
-          clearTimeout(typingTimeout.current);
-
-          typingTimeout.current = setTimeout(() => {
-            setTypingUser(null);
-          }, 2000);
-        }
-      });
+      socket.on("chat:newMessage", messageHandler);
+      socket.on("chat:typing", typingHandler);
     }
 
     return () => {
       leaveConversation(conversation._id);
+
+      if (socket) {
+        socket.off("chat:newMessage", messageHandler);
+        socket.off("chat:typing", typingHandler);
+      }
     };
-  }, [conversation]);
+  }, [conversation, currentUserId]);
 
   useEffect(() => {
     if (!messagesRef.current) return;
@@ -170,7 +176,9 @@ export default function ChatWindow({ conversation }) {
       <div ref={messagesRef} className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.map((msg, index) => {
           const senderId =
-            typeof msg.sender === "object" ? msg.sender._id : msg.sender;
+            typeof msg.sender === "object"
+              ? msg.sender._id?.toString()
+              : msg.sender?.toString();
 
           const prev = messages[index - 1];
 
@@ -190,7 +198,7 @@ export default function ChatWindow({ conversation }) {
 
           const isLastInGroup = nextSenderId !== senderId;
 
-          const isMine = senderId === currentUserId;
+          const isMine = String(senderId) === String(currentUserId);
 
           return (
             <div
