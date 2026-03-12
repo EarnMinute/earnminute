@@ -2,6 +2,8 @@ const taskRepository = require("../repositories/taskRepository");
 const Application = require("../models/Application");
 const Task = require("../models/Task");
 const notificationService = require("./notificationService");
+const activityService = require("./activityService");
+const User = require("../models/User");
 
 /* ===============================
    CREATE TASK
@@ -15,6 +17,24 @@ const createTask = async (employerId, data) => {
     isDeleted: false,
     isRated: false
   });
+
+  /* ===============================
+   LOG ACTIVITY
+  ================================ */
+
+const User = require("../models/User");
+
+const employer = await User.findById(employerId);
+
+if (employer) {
+  await activityService.logActivity({
+    type: "task_posted",
+    userId: employer._id,
+    userName: employer.name,
+    taskId: task._id,
+    taskTitle: task.title
+  });
+}
 
   /* ===============================
      NOTIFY ADMINS
@@ -130,6 +150,18 @@ const completeTask = async (taskId) => {
   task.isRated = false;
 
   await taskRepository.saveTask(task);
+
+  const freelancer = await User.findById(task.assignedFreelancer);
+
+if (freelancer) {
+  await activityService.logActivity({
+    type: "task_completed",
+    userId: freelancer._id,
+    userName: freelancer.name,
+    taskId: task._id,
+    taskTitle: task.title
+  });
+}
 
   /* ===============================
      NOTIFY FREELANCER

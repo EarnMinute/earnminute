@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const userRepository = require("../repositories/userRepository");
+const activityService = require("./activityService");
 
 const {
   incrementRegistration,
@@ -54,6 +55,14 @@ const registerUser = async ({ name, email, password, role }) => {
     email: user.email,
     role: user.role,
   };
+
+  
+
+await activityService.logActivity({
+  type: "user_joined",
+  userId: user._id,
+  userName: user.name
+});
 
   return {
     token: generateToken(user._id),

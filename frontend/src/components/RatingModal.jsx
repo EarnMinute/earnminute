@@ -1,5 +1,5 @@
 import { useState } from "react";
-import API from "../services/api";
+import API from "@/services/api";
 
 function RatingModal({ taskId, onClose, onSuccess }) {
   const [rating, setRating] = useState(5);

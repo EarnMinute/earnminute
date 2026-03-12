@@ -1,7 +1,9 @@
 import { Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import FloatingFeedbackButton from "./components/FloatingFeedbackButton";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminLayout from "./components/admin/AdminLayout";
 
 import RoleSelectionPage from "./pages/auth/RoleSelectionPage";
 import Login from "./pages/auth/Login";
@@ -11,6 +13,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminTasks from "./pages/admin/AdminTasks";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
+import AdminFeedbacks from "./pages/admin/AdminFeedbacks";
 
 import EmployerDashboard from "./pages/employer/EmployerDashboard";
 import PostTask from "./pages/employer/PostTask";
@@ -20,6 +23,7 @@ import FreelancerDashboard from "./pages/freelancer/FreelancerDashboard";
 import Tasks from "./pages/public/Tasks";
 import TaskDetails from "./pages/public/TaskDetails";
 import FreelancerProfile from "./pages/public/FreelancerProfile";
+import EmployerProfile from "./pages/public/EmployerProfile";
 import GuestEmployerPage from "./pages/public/GuestEmployerPage";
 import GuestFreelancerPage from "./pages/public/GuestFreelancerPage";
 import FeedbackPage from "./pages/public/FeedbackPage";
@@ -35,8 +39,8 @@ import NotFound from "./pages/misc/NotFound";
 function App() {
   return (
     <div className="flex flex-col min-h-screen">
-      {" "}
       <Navbar />
+
       <div className="flex-grow">
         <Routes>
           <Route path="/" element={<RoleSelectionPage />} />
@@ -46,37 +50,19 @@ function App() {
           <Route path="/register" element={<Register />} />
 
           <Route
-            path="/admin/dashboard"
+            path="/admin"
             element={
               <ProtectedRoute role="admin">
-                <AdminDashboard />
+                <AdminLayout />
               </ProtectedRoute>
             }
-          />
-          <Route
-            path="/admin/users"
-            element={
-              <ProtectedRoute role="admin">
-                <AdminUsers />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/tasks"
-            element={
-              <ProtectedRoute role="admin">
-                <AdminTasks />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/analytics"
-            element={
-              <ProtectedRoute role="admin">
-                <AdminAnalytics />
-              </ProtectedRoute>
-            }
-          />
+          >
+            <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="users" element={<AdminUsers />} />
+            <Route path="tasks" element={<AdminTasks />} />
+            <Route path="analytics" element={<AdminAnalytics />} />
+            <Route path="feedbacks" element={<AdminFeedbacks />} />
+          </Route>
 
           <Route
             path="/employer/dashboard"
@@ -119,6 +105,8 @@ function App() {
             element={<FreelancerProfile />}
           />
 
+          <Route path="/employer/profile/:id" element={<EmployerProfile />} />
+
           <Route path="/tasks" element={<Tasks />} />
           <Route path="/task/:id" element={<TaskDetails />} />
 
@@ -130,6 +118,9 @@ function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
+
+      <FloatingFeedbackButton />
+
       <Footer />
     </div>
   );

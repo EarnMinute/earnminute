@@ -1,6 +1,8 @@
 const Application = require("../models/Application");
 const taskRepository = require("../repositories/taskRepository");
 const notificationService = require("./notificationService");
+const activityService = require("./activityService");
+const User = require("../models/User");
 
 /* ===============================
    APPLY TO TASK
@@ -24,6 +26,17 @@ const applyToTask = async (taskId, freelancerId) => {
 
   /* Atomic increment (race-condition safe) */
   await taskRepository.incrementApplicationsCount(taskId);
+
+const freelancer = await User.findById(freelancerId);
+
+if (freelancer) {
+  await activityService.logActivity({
+    type: "task_applied",
+    userId: freelancer._id,
+    userName: freelancer.name,
+    taskId: taskId
+  });
+}
 
   /* ===============================
      NOTIFY EMPLOYER

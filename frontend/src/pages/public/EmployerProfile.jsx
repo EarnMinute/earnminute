@@ -3,40 +3,41 @@ import { useParams } from "react-router-dom";
 import API from "@/services/api";
 import { useAuth } from "@/context/AuthContext";
 
-function FreelancerProfile() {
+function EmployerProfile() {
   const { id } = useParams();
   const { user } = useAuth();
 
-  const [freelancer, setFreelancer] = useState(null);
+  const [employer, setEmployer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
 
   const [form, setForm] = useState({
     bio: "",
-    skills: "",
+    company: "",
+    website: "",
   });
 
   const isOwner = user?.user?._id === id;
 
   useEffect(() => {
-    fetchFreelancer();
+    fetchEmployer();
   }, []);
 
-  const fetchFreelancer = async () => {
+  const fetchEmployer = async () => {
     try {
-      const res = await API.get(`/users/freelancer/${id}`);
+      const res = await API.get(`/users/employer/${id}`);
 
-      setFreelancer(res.data);
+      setEmployer(res.data);
 
       setForm({
-        name: res.data.name || "",
         bio: res.data.bio || "",
-        skills: (res.data.skills || []).join(", "),
+        company: res.data.company || "",
+        website: res.data.website || "",
       });
 
       setLoading(false);
     } catch (error) {
-      console.error("Failed to load freelancer profile:", error);
+      console.error("Failed to load employer profile:", error);
       setLoading(false);
     }
   };
@@ -50,20 +51,12 @@ function FreelancerProfile() {
 
   const handleSave = async () => {
     try {
-      const payload = {
-        bio: form.bio,
-        skills: form.skills
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean),
-      };
-
-      await API.patch("/users/profile", payload);
+      await API.patch("/users/profile", form);
 
       setEditing(false);
-      fetchFreelancer();
+      fetchEmployer();
     } catch (error) {
-      console.error("Failed to update profile:", error);
+      console.error("Failed to update employer profile:", error);
     }
   };
 
@@ -75,16 +68,13 @@ function FreelancerProfile() {
     );
   }
 
-  if (!freelancer) {
+  if (!employer) {
     return (
       <div className="max-w-5xl mx-auto py-20 px-6">
-        <p className="text-gray-500">Freelancer not found.</p>
+        <p className="text-gray-500">Employer not found.</p>
       </div>
     );
   }
-
-  const ratingAvg = freelancer?.rating?.average || 0;
-  const ratingCount = freelancer?.rating?.count || 0;
 
   return (
     <div className="bg-gray-50 min-h-screen py-16 px-6">
@@ -98,16 +88,28 @@ function FreelancerProfile() {
           />
 
           <div className="text-center md:text-left flex-1">
+            {/* NAME (READ ONLY) */}
             <h1 className="text-3xl font-bold text-blue-900">
-              {freelancer.name}
+              {employer.name}
             </h1>
 
-            <p className="text-yellow-500 text-lg mt-2">
-              ⭐ {ratingAvg.toFixed(1)} ({ratingCount} reviews)
-            </p>
+            {/* COMPANY */}
+            {editing ? (
+              <input
+                name="company"
+                value={form.company}
+                onChange={handleChange}
+                placeholder="Company name"
+                className="mt-2 border rounded px-3 py-1"
+              />
+            ) : (
+              employer.company && (
+                <p className="text-gray-600 mt-2">{employer.company}</p>
+              )
+            )}
 
             <p className="text-gray-500 mt-3">
-              Member of EarnMinute freelance marketplace.
+              Member since {new Date(employer.createdAt).toLocaleDateString()}
             </p>
           </div>
 
@@ -143,42 +145,10 @@ function FreelancerProfile() {
 
         {/* PROFILE GRID */}
         <div className="grid md:grid-cols-2 gap-10">
-          {/* SKILLS */}
-          <div>
-            <h2 className="text-lg font-semibold text-blue-900 mb-3">Skills</h2>
-
-            {editing ? (
-              <input
-                name="skills"
-                value={form.skills}
-                onChange={handleChange}
-                placeholder="React, Node, MongoDB"
-                className="w-full border rounded px-3 py-2"
-              />
-            ) : (
-              <p className="text-gray-500">
-                {freelancer.skills?.length
-                  ? freelancer.skills.join(", ")
-                  : "No skills listed yet."}
-              </p>
-            )}
-          </div>
-
-          {/* COMPLETED TASKS */}
-          <div>
-            <h2 className="text-lg font-semibold text-blue-900 mb-3">
-              Completed Tasks
-            </h2>
-
-            <p className="text-gray-500">
-              Task completion statistics will appear here later.
-            </p>
-          </div>
-
           {/* BIO */}
           <div>
             <h2 className="text-lg font-semibold text-blue-900 mb-3">
-              About Freelancer
+              About Employer
             </h2>
 
             {editing ? (
@@ -191,20 +161,37 @@ function FreelancerProfile() {
               />
             ) : (
               <p className="text-gray-500">
-                {freelancer.bio || "No bio added yet."}
+                {employer.bio || "Employer bio will appear here."}
               </p>
             )}
           </div>
 
-          {/* REVIEWS */}
+          {/* WEBSITE */}
           <div>
             <h2 className="text-lg font-semibold text-blue-900 mb-3">
-              Client Reviews
+              Website
             </h2>
 
-            <p className="text-gray-500">
-              Detailed employer reviews will appear here later.
-            </p>
+            {editing ? (
+              <input
+                name="website"
+                value={form.website}
+                onChange={handleChange}
+                placeholder="https://example.com"
+                className="w-full border rounded px-3 py-2"
+              />
+            ) : employer.website ? (
+              <a
+                href={employer.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                {employer.website}
+              </a>
+            ) : (
+              <p className="text-gray-500">No website provided.</p>
+            )}
           </div>
         </div>
       </div>
@@ -212,4 +199,4 @@ function FreelancerProfile() {
   );
 }
 
-export default FreelancerProfile;
+export default EmployerProfile;

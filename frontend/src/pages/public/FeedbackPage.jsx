@@ -1,4 +1,5 @@
 import { useState } from "react";
+import api from "@/services/api";
 
 function FeedbackPage() {
   const [form, setForm] = useState({
@@ -9,6 +10,8 @@ function FeedbackPage() {
   });
 
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     setForm({
@@ -17,14 +20,35 @@ function FeedbackPage() {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    console.log("Feedback submitted:", form);
+    if (!form.message.trim()) {
+      setError("Feedback message is required.");
+      return;
+    }
 
-    // later connect API here
+    try {
+      setLoading(true);
+      setError("");
 
-    setSubmitted(true);
+      await api.post("/feedback", {
+        type: form.type,
+        message: form.message,
+        name: form.name || undefined,
+        email: form.email || undefined,
+      });
+
+      setSubmitted(true);
+    } catch (err) {
+      console.error("Feedback submit error:", err);
+      setError(
+        err?.response?.data?.message ||
+          "Failed to submit feedback. Please try again.",
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -61,6 +85,12 @@ function FeedbackPage() {
             <h2 className="text-2xl font-semibold text-blue-900">
               Share Your Feedback
             </h2>
+
+            {error && (
+              <div className="bg-red-100 text-red-700 px-4 py-2 rounded-md text-sm">
+                {error}
+              </div>
+            )}
 
             {/* FEEDBACK TYPE */}
             <div>
@@ -141,9 +171,10 @@ function FeedbackPage() {
             {/* SUBMIT */}
             <button
               type="submit"
-              className="w-full bg-orange-500 text-white py-3 rounded-lg font-medium hover:bg-orange-600 transition"
+              disabled={loading}
+              className="w-full bg-orange-500 text-white py-3 rounded-lg font-medium hover:bg-orange-600 transition disabled:opacity-70"
             >
-              Submit Feedback
+              {loading ? "Submitting..." : "Submit Feedback"}
             </button>
           </form>
         )}

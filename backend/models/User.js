@@ -33,6 +33,35 @@ const userSchema = new mongoose.Schema(
       index: true,
     },
 
+    /* ===============================
+       PROFILE FIELDS
+    ================================ */
+
+    bio: {
+      type: String,
+      maxlength: 1000,
+      default: "",
+    },
+
+    skills: {
+      type: [String],
+      default: [],
+    },
+
+    company: {
+      type: String,
+      trim: true,
+      maxlength: 120,
+      default: "",
+    },
+
+    website: {
+      type: String,
+      trim: true,
+      maxlength: 200,
+      default: "",
+    },
+
     loginAttempts: {
       type: Number,
       default: 0,

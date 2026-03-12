@@ -1,7 +1,7 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState, useRef } from "react";
-import API from "../services/api";
+import API from "@/services/api";
 import NotificationDropdown from "./NotificationDropdown";
 
 function Navbar() {
@@ -31,7 +31,17 @@ function Navbar() {
 
     return "/";
   };
+  const getProfileLink = () => {
+    if (!user) return "/";
 
+    const role = user?.user?.role;
+    const id = user?.user?._id;
+
+    if (role === "freelancer") return `/freelancer/profile/${id}`;
+    if (role === "employer") return `/employer/profile/${id}`;
+
+    return getDashboardLink();
+  };
   const isEmployerPage = location.pathname.startsWith("/employers");
   const isFreelancerPage = location.pathname.startsWith("/freelancers");
 
@@ -131,6 +141,13 @@ function Navbar() {
 
             {user ? (
               <>
+                <Link
+                  to={getProfileLink()}
+                  className="text-gray-600 hover:text-blue-900 font-medium transition"
+                >
+                  Profile
+                </Link>
+
                 <Link
                   to={getDashboardLink()}
                   className="text-gray-600 hover:text-blue-900 font-medium transition"

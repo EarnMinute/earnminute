@@ -153,6 +153,8 @@ const analyticsRoutes = require("./routes/analyticsRoutes");
 const userRoutes = require("./routes/userRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const chatRoutes = require("./routes/chatRoutes");
+const feedbackRoutes = require("./routes/feedbackRoutes");
+const activityRoutes = require("./routes/activityRoutes");
 
 app.get("/", (req, res) => {
 res.send("EarnMinute API Secure 🚀");
@@ -168,6 +170,8 @@ app.use("/api/v1/applications", applicationLimiter, applicationRoutes);
 app.use("/api/v1/analytics", analyticsRoutes);
 app.use("/api/v1/notifications", notificationRoutes);
 app.use("/api/v1/chat", chatRoutes);
+app.use("/api/v1/feedback", feedbackRoutes);
+app.use("/api/v1/activities", activityRoutes);
 
 /* ===============================
 CENTRAL ERROR HANDLER

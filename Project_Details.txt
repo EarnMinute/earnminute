@@ -1,0 +1,517 @@
+# PROJECT NAME
+
+**EarnMinute**
+
+---
+
+# PROJECT TYPE
+
+Full-stack **freelance micro-task marketplace platform**.
+
+Concept inspiration:
+
+* Fiverr
+* Upwork
+* Micro-task marketplaces
+
+The system allows employers to post small tasks and freelancers to complete them quickly for payment.
+
+---
+
+# TECH STACK
+
+## Backend
+
+* Node.js
+* Express.js
+* MongoDB
+* Mongoose
+* JWT Authentication
+* Socket.IO (Realtime system)
+
+### Security Implemented
+
+* Helmet
+* Express Rate Limiting
+* Mongo Sanitization
+* CORS restriction
+* Input validation
+
+---
+
+## Frontend
+
+* React (Vite)
+* React Router
+* TailwindCSS
+* TanStack React Query
+* Axios
+* Socket.IO Client
+
+---
+
+## Deployment
+
+Frontend
+Vercel
+
+Backend
+Render
+
+Database
+MongoDB Atlas
+
+---
+
+# PROJECT ARCHITECTURE
+
+Backend uses **Layered Architecture**
+
+```
+Controller → Service → Repository → Database
+```
+
+Folder structure:
+
+```
+backend/
+
+controllers/
+services/
+repositories/
+models/
+routes/
+middleware/
+
+server.js
+```
+
+### Responsibilities
+
+Controllers
+Handle HTTP requests and responses.
+
+Services
+Contain business logic.
+
+Repositories
+Handle database queries.
+
+Models
+Define MongoDB schemas.
+
+---
+
+# MAIN USER ROLES
+
+Admin
+Platform administrator.
+
+Employer
+Creates and manages tasks.
+
+Freelancer
+Browses tasks and performs work.
+
+---
+
+# CORE FEATURES IMPLEMENTED
+
+## Authentication System
+
+User registration
+User login
+JWT authentication
+Role-based authorization
+
+---
+
+# Task Marketplace System
+
+Employer can:
+
+Create tasks
+View applications
+Assign freelancer
+Mark task completed
+Rate freelancer
+
+Freelancer can:
+
+Browse tasks
+Apply to tasks
+View assigned tasks
+Submit completed work
+
+---
+
+# Application System
+
+Application statuses:
+
+```
+applied
+assigned
+rejected
+```
+
+Employers review applications and assign a freelancer.
+
+---
+
+# Task Lifecycle
+
+Task statuses:
+
+```
+open
+assigned
+completed
+```
+
+Workflow:
+
+```
+Employer posts task
+↓
+Freelancers apply
+↓
+Employer assigns freelancer
+↓
+Freelancer completes work
+↓
+Employer marks task completed
+↓
+Employer rates freelancer
+```
+
+---
+
+# Realtime Chat System
+
+A **full realtime messaging system** has been implemented.
+
+Technologies:
+
+```
+Socket.IO
+REST API fallback
+MongoDB message storage
+```
+
+---
+
+# Chat Features Implemented
+
+Task-based conversations
+One conversation per:
+
+```
+task + freelancer
+```
+
+Employer can chat with each freelancer individually.
+
+---
+
+## Chat UX Features
+
+Modern messaging interface including:
+
+Realtime messaging
+Optimistic message sending
+Delivery status indicators
+
+```
+✓ sent
+✓✓ delivered
+```
+
+Typing indicator
+
+```
+User is typing...
+```
+
+Message grouping (WhatsApp-style)
+
+Timestamp shown on last message in group
+
+Keyboard messaging:
+
+```
+Enter → send message
+Shift + Enter → new line
+```
+
+Auto-focus message input when conversation opens.
+
+---
+
+## Chat Architecture
+
+Frontend
+
+```
+API request → save message
+Socket event → broadcast message
+```
+
+Backend
+
+```
+POST /chat/messages
+↓
+Save message
+↓
+Emit socket event
+↓
+Clients update UI
+```
+
+---
+
+## Chat Database Models
+
+Conversation
+
+```
+task
+employer
+freelancer
+lastMessage
+lastMessageAt
+```
+
+Message
+
+```
+conversation
+sender
+content
+isRead
+createdAt
+```
+
+---
+
+# Notification System
+
+A complete notification system exists.
+
+Triggers include:
+
+Application received
+Freelancer assigned
+Task completed
+Rating received
+
+---
+
+## Notification UI
+
+Navbar bell icon
+Unread count badge
+Dropdown notification panel
+
+Features:
+
+Pagination
+Infinite scroll
+Mark single notification read
+Mark all notifications read
+Close on outside click
+
+---
+
+# Chat Notification System
+
+Navbar message icon shows:
+
+Unread chat count across conversations.
+
+Each conversation tracks:
+
+```
+unread messages
+```
+
+Unread count updates dynamically.
+
+---
+
+# Admin System
+
+Admin dashboard includes:
+
+User management
+Task moderation
+Platform analytics
+
+Admin can:
+
+View users
+View tasks
+Moderate tasks
+Access system analytics
+
+---
+
+# Pagination Implemented
+
+Tasks list
+Admin tasks
+Admin users
+Notifications
+Chat messages
+
+---
+
+# DATABASE MODELS
+
+User
+Task
+Application
+Notification
+Conversation
+Message
+
+---
+
+# CURRENT FRONTEND STRUCTURE
+
+```
+frontend/src/
+```
+
+### Pages
+
+```
+admin/
+employer/
+freelancer/
+public/
+legal/
+misc/
+```
+
+---
+
+### Components
+
+```
+Navbar.jsx
+NotificationDropdown.jsx
+ChatLayout.jsx
+ChatSidebar.jsx
+ChatWindow.jsx
+RatingModal.jsx
+AdminLayout.jsx
+```
+
+---
+
+### Services
+
+```
+api.js
+chatService.js
+socket.js
+```
+
+---
+
+### Context
+
+```
+AuthContext.jsx
+```
+
+---
+
+# IMPORTANT DEVELOPMENT RULES
+
+Before modifying code:
+
+1. Analyze the full codebase
+2. Ask for the relevant file
+3. Return the **FULL updated file** Unless it is bigger than ~200 lines. If it is bigger than ~200 lines then you can give the code snippet and the exact details of where to paste the code (after what and before what).
+4. Avoid breaking existing features (very important)
+5. Maintain architecture
+
+```
+Controller → Service → Repository
+```
+
+Backward compatibility must be preserved.
+
+---
+
+# CURRENT SYSTEM STATUS
+
+Platform core features are **fully functional**.
+
+Working systems:
+
+Authentication
+Task marketplace
+Applications
+Freelancer assignment
+Task completion
+Ratings
+Notifications
+Admin moderation
+Pagination
+
+---
+
+# Newly Implemented System
+
+Realtime Chat System
+
+Features include:
+
+Realtime messaging
+Typing indicator
+Delivery ticks
+Grouped messages
+Keyboard send
+Auto-focus input
+Socket lifecycle cleanup
+Duplicate message prevention
+
+---
+
+# CURRENT DEVELOPMENT TARGET
+
+Next major features planned:
+
+Realtime notifications via Socket.IO.
+
+Requirements:
+
+Must work with:
+
+```
+Render backend
+Vercel frontend
+```
+
+Polling fallback must remain active.
+
+---
+
+# LONG TERM ROADMAP
+
+Future development goals:
+
+Escrow payment system
+File attachments in chat
+Conversation unread separator
+Message reactions
+Admin chat moderation
+Search in chat
+Mobile responsive improvements
+Email notifications
+
+---

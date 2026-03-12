@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getConversations } from "../../services/chatService";
+import { getConversations } from "@/services/chatService";
 import ChatSidebar from "./ChatSidebar";
 import ChatWindow from "./ChatWindow";
 

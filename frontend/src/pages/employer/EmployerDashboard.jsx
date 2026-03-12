@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import API from "../../services/api";
-import RatingModal from "../../components/RatingModal";
+import API from "@/services/api";
+import RatingModal from "@/components/RatingModal";
 import { Link } from "react-router-dom";
 
 function EmployerDashboard() {

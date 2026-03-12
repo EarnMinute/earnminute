@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import LiveActivityFeed from "../../components/LiveActivityFeed";
+import LiveActivityFeed from "@/components/LiveActivityFeed";
 
 function GuestEmployerPage() {
   return (
@@ -27,10 +27,10 @@ function GuestEmployerPage() {
               </Link>
 
               <Link
-                to="/freelancers"
+                to="/register"
                 className="bg-white text-blue-900 px-8 py-3 rounded-lg font-medium hover:bg-gray-100 transition shadow-lg"
               >
-                Browse Freelancers
+                Join as Employer
               </Link>
             </div>
           </div>

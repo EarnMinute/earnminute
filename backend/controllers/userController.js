@@ -1,3 +1,4 @@
+const userService = require("../services/userService");
 const User = require("../models/User");
 
 /* ==================================
@@ -5,17 +6,64 @@ const User = require("../models/User");
 ================================== */
 exports.getFreelancerProfile = async (req, res) => {
   try {
-    const freelancer = await User.findById(req.params.id).select(
-      "name rating createdAt"
-    );
 
-    if (!freelancer) {
-      return res.status(404).json({ message: "Freelancer not found" });
-    }
+    const freelancer = await userService.getFreelancerProfile(req.params.id);
 
     res.json(freelancer);
+
   } catch (error) {
+
+    if (error.message === "Freelancer not found") {
+      return res.status(404).json({ message: error.message });
+    }
+
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+/* ==================================
+   PUBLIC EMPLOYER PROFILE
+================================== */
+exports.getEmployerProfile = async (req, res) => {
+  try {
+
+    const employer = await userService.getEmployerProfile(req.params.id);
+
+    res.json(employer);
+
+  } catch (error) {
+
+    if (error.message === "Employer not found") {
+      return res.status(404).json({ message: error.message });
+    }
+
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+/* ==================================
+   UPDATE OWN PROFILE
+================================== */
+exports.updateProfile = async (req, res) => {
+  try {
+
+    const updatedUser = await userService.updateProfile(
+      req.user._id,
+      req.body
+    );
+
+    res.json({
+      message: "Profile updated successfully",
+      user: updatedUser
+    });
+
+  } catch (error) {
+
+    if (error.message === "User not found") {
+      return res.status(404).json({ message: error.message });
+    }
+
+    res.status(500).json({ message: "Failed to update profile" });
   }
 };
 
@@ -63,6 +111,7 @@ exports.getAllUsersAdmin = async (req, res) => {
 ================================== */
 exports.changeUserRole = async (req, res) => {
   try {
+
     const { role } = req.body;
 
     const allowedRoles = ["freelancer", "employer", "admin"];
@@ -85,6 +134,7 @@ exports.changeUserRole = async (req, res) => {
       message: "Role updated",
       user,
     });
+
   } catch (error) {
     res.status(500).json({ message: "Failed to update role" });
   }
@@ -95,6 +145,7 @@ exports.changeUserRole = async (req, res) => {
 ================================== */
 exports.deleteUserAdmin = async (req, res) => {
   try {
+
     const user = await User.findByIdAndDelete(req.params.id);
 
     if (!user) {
@@ -102,6 +153,7 @@ exports.deleteUserAdmin = async (req, res) => {
     }
 
     res.json({ message: "User deleted successfully" });
+
   } catch (error) {
     res.status(500).json({ message: "Failed to delete user" });
   }

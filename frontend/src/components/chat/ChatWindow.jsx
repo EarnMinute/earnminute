@@ -6,10 +6,10 @@ import {
   leaveConversation,
   onNewMessage,
   markConversationRead,
-} from "../../services/chatService";
-import { useAuth } from "../../context/AuthContext";
+} from "@/services/chatService";
+import { useAuth } from "@/context/AuthContext";
 import { Link } from "react-router-dom";
-import { getSocket } from "../../services/socket";
+import { getSocket } from "@/services/socket";
 
 export default function ChatWindow({ conversation }) {
   const { user } = useAuth();
