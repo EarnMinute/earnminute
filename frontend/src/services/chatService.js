@@ -21,15 +21,6 @@ return res.data.messages;
 };
 
 export const sendMessage = async (conversationId, content) => {
-const socket = getSocket();
-
-if (socket) {
-socket.emit("chat:send", {
-conversationId,
-content
-});
-}
-
 const res = await chatAPI.sendMessage({
 conversationId,
 content

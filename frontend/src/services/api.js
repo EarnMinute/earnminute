@@ -9,14 +9,34 @@ const API = axios.create({
 });
 
 API.interceptors.request.use((config) => {
-const user = JSON.parse(localStorage.getItem("user"));
+  const stored = localStorage.getItem("user");
 
-if (user?.token) {
-config.headers.Authorization = `Bearer ${user.token}`;
-}
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
 
-return config;
+      if (parsed?.token) {
+        config.headers.Authorization = `Bearer ${parsed.token}`;
+      }
+    } catch {
+      localStorage.removeItem("user");
+    }
+  }
+
+  return config;
 });
+
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem("user");
+      window.location.href = "/login";
+    }
+
+    return Promise.reject(error);
+  }
+);
 
 /* ===============================
 CHAT API

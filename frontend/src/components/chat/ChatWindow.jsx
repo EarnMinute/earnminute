@@ -22,6 +22,14 @@ export default function ChatWindow({ conversation }) {
   const messagesRef = useRef(null);
   const typingTimeout = useRef(null);
 
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (conversation && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [conversation]);
+
   useEffect(() => {
     if (!conversation) return;
 
@@ -34,9 +42,18 @@ export default function ChatWindow({ conversation }) {
     const socket = getSocket();
 
     const messageHandler = (message) => {
-      if (message.conversation === conversation._id) {
-        setMessages((prev) => [...prev, message]);
+      if (message.conversation !== conversation._id) return;
+
+      const senderId =
+        typeof message.sender === "object"
+          ? message.sender._id
+          : message.sender;
+
+      if (String(senderId) === String(currentUserId)) {
+        return; // ignore own socket message
       }
+
+      setMessages((prev) => [...prev, message]);
     };
 
     const typingHandler = (data) => {
@@ -259,8 +276,15 @@ export default function ChatWindow({ conversation }) {
 
       <div className="p-3 border-t flex gap-2">
         <input
+          ref={inputRef}
           value={text}
           onChange={(e) => handleTyping(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              handleSend();
+            }
+          }}
           placeholder="Type a message..."
           className="flex-1 border rounded px-3 py-2 text-sm"
         />
