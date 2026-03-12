@@ -89,26 +89,28 @@ app.use(mongoSanitize());
 CORS
 ================================ */
 const allowedOrigins = [
-"http://localhost:5173",
-"https://earnminute.vercel.app"
+  "http://localhost:5173",
+  "https://earnminute.vercel.app"
 ];
 
 app.use(
-cors({
-origin: function (origin, callback) {
-if (!origin) return callback(null, true);
+  cors({
+    origin: (origin, callback) => {
 
+      if (!origin) return callback(null, true);
 
-  if (allowedOrigins.includes(origin)) {
-    return callback(null, true);
-  }
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
 
-  return callback(new Error("CORS not allowed"));
-},
-credentials: true,
+      if (origin.includes("vercel.app")) {
+        return callback(null, true);
+      }
 
-
-})
+      return callback(new Error("CORS not allowed"));
+    },
+    credentials: true
+  })
 );
 
 /* ===============================
