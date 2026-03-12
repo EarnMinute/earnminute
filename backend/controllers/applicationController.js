@@ -90,12 +90,16 @@ exports.assignFreelancer = async (req, res) => {
     ================================ */
     const notificationService = require("../services/notificationService");
 
-    await notificationService.createNotification({
-      user: selectedApplication.freelancer,
-      type: "task_assigned",
-      message: `You have been assigned to task "${task.title}"`,
-      link: `/task/${taskId}`,
-    });
+    try {
+  await notificationService.createNotification({
+    user: selectedApplication.freelancer,
+    type: "task_assigned",
+    message: `You have been assigned to task "${task.title}"`,
+    link: `/task/${taskId}`,
+  });
+} catch (err) {
+  console.error("Notification failed:", err.message);
+}
 
     /* ===============================
        NOTIFY REJECTED FREELANCERS
@@ -106,13 +110,17 @@ exports.assignFreelancer = async (req, res) => {
     });
 
     for (const app of rejectedApplications) {
-      await notificationService.createNotification({
-        user: app.freelancer,
-        type: "application_rejected",
-        message: `Your application was not selected for task "${task.title}"`,
-        link: `/task/${taskId}`,
-      });
-    }
+  try {
+    await notificationService.createNotification({
+      user: app.freelancer,
+      type: "application_rejected",
+      message: `Your application was not selected for task "${task.title}"`,
+      link: `/task/${taskId}`,
+    });
+  } catch (err) {
+    console.error("Rejected notification failed:", err.message);
+  }
+}
 
     res.status(200).json({
       success: true,
