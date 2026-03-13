@@ -5,11 +5,18 @@ const {
   createTask,
   getAllTasks,
   getTaskById,
+  getTaskTimeline,
   getEmployerDashboard,
+  startTask,
+  submitTask,
+  requestRevision,
+  approveSubmission,
   completeTask,
+  cancelTask,
+  raiseDispute,
   rateFreelancer,
   getAllTasksAdmin,
-  deleteTask
+  deleteTask,
 } = require("../controllers/taskController");
 
 const { protect } = require("../middleware/authMiddleware");
@@ -19,69 +26,64 @@ const { restrictTo } = require("../middleware/roleMiddleware");
    PUBLIC TASK ROUTES
 ================================ */
 
-/*
-Browse tasks
-Supports filters:
-?search=
-?skill=
-?minBudget=
-?maxBudget=
-?page=
-*/
 router.get("/", getAllTasks);
 
-router.get("/:id", getTaskById);
-
-
 /* ===============================
-   EMPLOYER ROUTES
+   EMPLOYER
 ================================ */
 
-router.post(
-  "/",
-  protect,
-  restrictTo("employer"),
-  createTask
-);
+router.post("/", protect, restrictTo("employer"), createTask);
 
 router.get(
   "/employer/dashboard",
   protect,
   restrictTo("employer"),
-  getEmployerDashboard
+  getEmployerDashboard,
 );
+
+router.patch("/:id/revision", protect, restrictTo("employer"), requestRevision);
 
 router.patch(
-  "/:id/complete",
+  "/:id/approve",
   protect,
   restrictTo("employer"),
-  completeTask
+  approveSubmission,
 );
 
-router.post(
-  "/:id/rate",
-  protect,
-  restrictTo("employer"),
-  rateFreelancer
-);
+router.patch("/:id/complete", protect, restrictTo("employer"), completeTask);
 
+router.patch("/:id/cancel", protect, cancelTask);
+
+router.post("/:id/rate", protect, restrictTo("employer"), rateFreelancer);
 
 /* ===============================
-   ADMIN ROUTES
+   FREELANCER
 ================================ */
 
-router.get(
-  "/admin/all",
-  protect,
-  restrictTo("admin"),
-  getAllTasksAdmin
-);
+router.patch("/:id/start", protect, restrictTo("freelancer"), startTask);
 
-router.delete(
-  "/admin/:id",
-  protect,
-  restrictTo("admin"),
-  deleteTask
-);
+router.patch("/:id/submit", protect, restrictTo("freelancer"), submitTask);
+
+router.patch("/:id/dispute", protect, raiseDispute);
+
+/* ===============================
+   ADMIN
+================================ */
+
+router.get("/admin/all", protect, restrictTo("admin"), getAllTasksAdmin);
+
+router.delete("/:id", protect, restrictTo("admin"), deleteTask);
+
+/* ===============================
+   TASK TIMELINE
+================================ */
+
+router.get("/:id/timeline", protect, getTaskTimeline);
+
+/* ===============================
+   TASK DETAILS (KEEP LAST)
+================================ */
+
+router.get("/:id", getTaskById);
 
 module.exports = router;

@@ -2,12 +2,22 @@ import { useEffect, useState } from "react";
 import API from "@/services/api";
 import RatingModal from "@/components/RatingModal";
 import { Link } from "react-router-dom";
+import { EMPLOYER_DASHBOARD_TABS } from "@/utils/taskStates";
+import { getTaskActions } from "@/utils/taskActionEngine";
+import TaskActionButtons from "@/components/tasks/TaskActionButtons";
+import TaskTimeline from "@/components/tasks/TaskTimeline";
 
 function EmployerDashboard() {
   const [dashboard, setDashboard] = useState({
     open: [],
     assigned: [],
+    in_progress: [],
+    submitted: [],
+    revision_requested: [],
+    approved: [],
     completed: [],
+    cancelled: [],
+    disputed: [],
   });
 
   const [activeTab, setActiveTab] = useState("open");
@@ -28,7 +38,13 @@ function EmployerDashboard() {
       setDashboard({
         open: data.open || [],
         assigned: data.assigned || [],
+        in_progress: data.in_progress || [],
+        submitted: data.submitted || [],
+        revision_requested: data.revision_requested || [],
+        approved: data.approved || [],
         completed: data.completed || [],
+        cancelled: data.cancelled || [],
+        disputed: data.disputed || [],
       });
     } catch (error) {
       console.error("Dashboard error:", error);
@@ -75,11 +91,7 @@ function EmployerDashboard() {
     }
   };
 
-  const menuItems = [
-    { key: "open", label: "Open Tasks" },
-    { key: "assigned", label: "Assigned Tasks" },
-    { key: "completed", label: "Completed Tasks" },
-  ];
+  const menuItems = EMPLOYER_DASHBOARD_TABS;
 
   const renderBadge = (task) => {
     if (activeTab === "open") {
@@ -98,10 +110,58 @@ function EmployerDashboard() {
       );
     }
 
+    if (activeTab === "in_progress") {
+      return (
+        <span className="px-3 py-1 text-sm bg-blue-200 text-blue-900 rounded-full">
+          Work In Progress
+        </span>
+      );
+    }
+
+    if (activeTab === "submitted") {
+      return (
+        <span className="px-3 py-1 text-sm bg-yellow-100 text-yellow-800 rounded-full">
+          Awaiting Review
+        </span>
+      );
+    }
+
+    if (activeTab === "revision_requested") {
+      return (
+        <span className="px-3 py-1 text-sm bg-orange-100 text-orange-800 rounded-full">
+          Revision Requested
+        </span>
+      );
+    }
+
+    if (activeTab === "approved") {
+      return (
+        <span className="px-3 py-1 text-sm bg-green-100 text-green-800 rounded-full">
+          Approved
+        </span>
+      );
+    }
+
     if (activeTab === "completed") {
       return (
         <span className="px-3 py-1 text-sm bg-green-100 text-green-800 rounded-full">
           Completed by {task.assignedFreelancer?.name || "Freelancer"}
+        </span>
+      );
+    }
+
+    if (activeTab === "cancelled") {
+      return (
+        <span className="px-3 py-1 text-sm bg-gray-300 text-gray-700 rounded-full">
+          Cancelled
+        </span>
+      );
+    }
+
+    if (activeTab === "disputed") {
+      return (
+        <span className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded-full">
+          Disputed
         </span>
       );
     }
@@ -163,16 +223,14 @@ function EmployerDashboard() {
         </div>
       )}
 
-      {activeTab === "assigned" && (
-        <div className="border-t p-6">
-          <button
-            onClick={() => handleComplete(task._id)}
-            className="bg-blue-700 text-white px-4 py-2 rounded"
-          >
-            Mark Completed
-          </button>
-        </div>
-      )}
+      <div className="border-t p-6">
+        <TaskActionButtons
+          task={task}
+          userRole="employer"
+          onActionSuccess={fetchDashboard}
+        />
+      </div>
+      <TaskTimeline taskId={task._id} />
     </div>
   );
 

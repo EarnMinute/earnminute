@@ -72,6 +72,18 @@ const getEmployerTasks = async (employerId) => {
 };
 
 /* ===============================
+   GET ALL TASKS (ADMIN)
+================================ */
+const getAllTasksAdmin = async () => {
+  return await Task.find({
+    isDeleted: false,
+  })
+    .populate("employer", "name rating")
+    .populate("assignedFreelancer", "name rating")
+    .sort({ createdAt: -1 });
+};
+
+/* ===============================
    FIND TASK
 ================================ */
 const findById = async (id) => {
@@ -83,6 +95,34 @@ const findById = async (id) => {
 ================================ */
 const saveTask = async (task) => {
   return await task.save();
+};
+
+/* ===============================
+   ASSIGN FREELANCER
+================================ */
+const assignFreelancer = async (taskId, freelancerId) => {
+  return await Task.findByIdAndUpdate(
+    taskId,
+    {
+      status: "assigned",
+      assignedFreelancer: freelancerId,
+    },
+    { new: true },
+  );
+};
+
+/* ===============================
+   UPDATE TASK STATUS
+================================ */
+const updateTaskStatus = async (taskId, status, extra = {}) => {
+  return await Task.findByIdAndUpdate(
+    taskId,
+    {
+      status,
+      ...extra,
+    },
+    { new: true },
+  );
 };
 
 /* ===============================
@@ -100,7 +140,10 @@ module.exports = {
   searchTasks,
   getTaskById,
   getEmployerTasks,
+  getAllTasksAdmin,
   findById,
   saveTask,
+  assignFreelancer,
+  updateTaskStatus,
   incrementApplicationsCount,
 };

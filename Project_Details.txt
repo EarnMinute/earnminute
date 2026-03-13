@@ -1,24 +1,44 @@
-# PROJECT NAME
+# EarnMinute — Project Details
 
-**EarnMinute**
+## Project Overview
+
+**EarnMinute** is a full-stack **micro-task freelance marketplace platform** where employers can post small tasks and freelancers can apply, complete work, and receive payment.
+
+The platform focuses on **short tasks that can be completed quickly**, enabling users to earn money by completing small freelance jobs.
+
+Typical tasks may include:
+
+* Data entry
+* Social media tasks
+* Simple design work
+* Writing small content pieces
+* Online research
+* Website testing
+* File conversions
+
+The platform is designed with **Bangladesh-focused payment systems** and will later support:
+
+* bKash
+* Nagad
+* SSLCommerz
+* Internal wallet system
 
 ---
 
-# PROJECT TYPE
+# Core Platform Goals
 
-Full-stack **freelance micro-task marketplace platform**.
+The system is designed to prioritize:
 
-Concept inspiration:
-
-* Fiverr
-* Upwork
-* Micro-task marketplaces
-
-The system allows employers to post small tasks and freelancers to complete them quickly for payment.
+* Clean architecture
+* Strict task lifecycle control
+* Secure payments through escrow
+* Clear workflow between employers and freelancers
+* Dispute transparency
+* Scalable backend services
 
 ---
 
-# TECH STACK
+# Technology Stack
 
 ## Backend
 
@@ -26,16 +46,18 @@ The system allows employers to post small tasks and freelancers to complete them
 * Express.js
 * MongoDB
 * Mongoose
-* JWT Authentication
-* Socket.IO (Realtime system)
 
-### Security Implemented
+Architecture pattern:
 
-* Helmet
-* Express Rate Limiting
-* Mongo Sanitization
-* CORS restriction
-* Input validation
+```
+Controller → Service → Repository → Database
+```
+
+This pattern ensures:
+
+* separation of concerns
+* easier testing
+* maintainable services
 
 ---
 
@@ -43,475 +65,533 @@ The system allows employers to post small tasks and freelancers to complete them
 
 * React (Vite)
 * React Router
-* TailwindCSS
-* TanStack React Query
 * Axios
-* Socket.IO Client
+* Context API
+* TailwindCSS
 
----
-
-## Deployment
-
-Frontend
-Vercel
-
-Backend
-Render
-
-Database
-MongoDB Atlas
-
----
-
-# PROJECT ARCHITECTURE
-
-Backend uses **Layered Architecture**
+Frontend structure:
 
 ```
-Controller → Service → Repository → Database
-```
-
-Folder structure:
-
-```
-backend/
-
-controllers/
-services/
-repositories/
-models/
-routes/
-middleware/
-
-server.js
-```
-
-### Responsibilities
-
-Controllers
-Handle HTTP requests and responses.
-
-Services
-Contain business logic.
-
-Repositories
-Handle database queries.
-
-Models
-Define MongoDB schemas.
-
----
-
-# MAIN USER ROLES
-
-Admin
-Platform administrator.
-
-Employer
-Creates and manages tasks.
-
-Freelancer
-Browses tasks and performs work.
-
----
-
-# CORE FEATURES IMPLEMENTED
-
-## Authentication System
-
-User registration
-User login
-JWT authentication
-Role-based authorization
-
----
-
-# Task Marketplace System
-
-Employer can:
-
-Create tasks
-View applications
-Assign freelancer
-Mark task completed
-Rate freelancer
-
-Freelancer can:
-
-Browse tasks
-Apply to tasks
-View assigned tasks
-Submit completed work
-
----
-
-# Application System
-
-Application statuses:
-
-```
-applied
-assigned
-rejected
-```
-
-Employers review applications and assign a freelancer.
-
----
-
-# Task Lifecycle
-
-Task statuses:
-
-```
-open
-assigned
-completed
-```
-
-Workflow:
-
-```
-Employer posts task
-↓
-Freelancers apply
-↓
-Employer assigns freelancer
-↓
-Freelancer completes work
-↓
-Employer marks task completed
-↓
-Employer rates freelancer
+src
+ ├ api
+ ├ components
+ ├ context
+ ├ hooks
+ ├ layouts
+ ├ pages
+ ├ services
+ └ utils
 ```
 
 ---
 
-# Realtime Chat System
+# Platform Roles
 
-A **full realtime messaging system** has been implemented.
+The system supports three user roles:
 
-Technologies:
+### Employer
 
-```
-Socket.IO
-REST API fallback
-MongoDB message storage
-```
+Employers can:
 
----
-
-# Chat Features Implemented
-
-Task-based conversations
-One conversation per:
-
-```
-task + freelancer
-```
-
-Employer can chat with each freelancer individually.
+* Post tasks
+* View freelancer applications
+* Assign freelancers
+* Review submissions
+* Approve work
+* Request revisions
+* Rate freelancers
 
 ---
 
-## Chat UX Features
+### Freelancer
 
-Modern messaging interface including:
+Freelancers can:
 
-Realtime messaging
-Optimistic message sending
-Delivery status indicators
-
-```
-✓ sent
-✓✓ delivered
-```
-
-Typing indicator
-
-```
-User is typing...
-```
-
-Message grouping (WhatsApp-style)
-
-Timestamp shown on last message in group
-
-Keyboard messaging:
-
-```
-Enter → send message
-Shift + Enter → new line
-```
-
-Auto-focus message input when conversation opens.
+* Browse tasks
+* Apply to tasks
+* Accept assignments
+* Start tasks
+* Submit completed work
+* Resubmit after revision
+* Receive ratings
 
 ---
 
-## Chat Architecture
+### Admin
 
-Frontend
+Admins manage the platform:
 
-```
-API request → save message
-Socket event → broadcast message
-```
-
-Backend
-
-```
-POST /chat/messages
-↓
-Save message
-↓
-Emit socket event
-↓
-Clients update UI
-```
+* View analytics
+* Manage users
+* Monitor tasks
+* Handle disputes
+* Moderate feedback
 
 ---
 
-## Chat Database Models
+# Core Domain Models
 
-Conversation
+## User
+
+Represents a platform user.
+
+Important fields:
 
 ```
-task
+name
+email
+password
+role
+bio
+skills
+company
+website
+rating
+createdAt
+```
+
+Roles:
+
+```
 employer
 freelancer
-lastMessage
-lastMessageAt
+admin
 ```
 
-Message
+---
+
+# Task
+
+Tasks represent work posted by employers.
+
+Important fields:
 
 ```
-conversation
-sender
-content
-isRead
+title
+description
+skills
+budgetType
+budgetAmount
+deadline
+status
+employer
+assignedFreelancer
 createdAt
 ```
 
 ---
 
+# Application
+
+Freelancers apply to tasks.
+
+Important fields:
+
+```
+task
+freelancer
+coverLetter
+status
+createdAt
+```
+
+Application statuses:
+
+```
+applied
+accepted
+rejected
+```
+
+Only **one freelancer can be accepted per task.**
+
+---
+
+# TaskSubmission
+
+Stores proof of completed work.
+
+Supports:
+
+```
+message
+links
+screenshots
+file uploads
+```
+
+Used when freelancers submit work for employer review.
+
+---
+
+# Escrow
+
+Escrow holds payment until the employer approves the work.
+
+Escrow lifecycle:
+
+```
+created
+funded
+released
+refunded
+```
+
+Escrow ensures:
+
+* freelancers get paid
+* employers receive completed work
+
+---
+
+# TaskTimeline
+
+The **TaskTimeline system records every lifecycle event**.
+
+Example events:
+
+```
+task_posted
+freelancer_assigned
+task_started
+submission_created
+revision_requested
+submission_approved
+task_completed
+dispute_opened
+```
+
+Timeline is used for:
+
+* dispute investigation
+* audit logging
+* activity tracking
+
+---
+
 # Notification System
 
-A complete notification system exists.
+Users receive notifications for important events.
 
-Triggers include:
+Examples:
 
-Application received
-Freelancer assigned
-Task completed
-Rating received
+```
+new application received
+task assigned
+submission received
+revision requested
+submission approved
+rating received
+```
+
+Notifications help keep users informed about task progress.
 
 ---
 
-## Notification UI
+# Activity System
 
-Navbar bell icon
-Unread count badge
-Dropdown notification panel
+Tracks public activity across the platform.
 
-Features:
+Examples:
 
-Pagination
-Infinite scroll
-Mark single notification read
-Mark all notifications read
-Close on outside click
+```
+task posted
+freelancer applied
+task completed
+user joined
+```
+
+Displayed in live activity feeds.
 
 ---
 
-# Chat Notification System
+# Task Lifecycle (State Machine)
 
-Navbar message icon shows:
+The platform enforces a **strict task lifecycle** to prevent invalid actions.
 
-Unread chat count across conversations.
-
-Each conversation tracks:
+Task states:
 
 ```
-unread messages
+open
+assigned
+in_progress
+submitted
+revision_requested
+approved
+completed
+cancelled
+disputed
 ```
 
-Unread count updates dynamically.
+Lifecycle flow:
+
+```
+open
+ ↓
+assigned
+ ↓
+in_progress
+ ↓
+submitted
+ ↓
+revision_requested (optional)
+ ↓
+approved
+ ↓
+completed
+```
+
+Alternative paths:
+
+```
+open → cancelled
+assigned → cancelled
+submitted → disputed
+```
+
+Rules include:
+
+* freelancer must start task before submission
+* employer cannot cancel after work begins
+* submission required before approval
+* escrow must be funded before work begins
 
 ---
 
-# Admin System
+# Escrow Workflow
 
-Admin dashboard includes:
+Escrow ensures secure payments.
 
-User management
-Task moderation
-Platform analytics
-
-Admin can:
-
-View users
-View tasks
-Moderate tasks
-Access system analytics
-
----
-
-# Pagination Implemented
-
-Tasks list
-Admin tasks
-Admin users
-Notifications
-Chat messages
-
----
-
-# DATABASE MODELS
-
-User
-Task
-Application
-Notification
-Conversation
-Message
-
----
-
-# CURRENT FRONTEND STRUCTURE
+Workflow:
 
 ```
-frontend/src/
+1 Employer posts task
+2 Employer funds escrow
+3 Freelancer starts task
+4 Freelancer submits work
+5 Employer reviews submission
+6 Employer approves work
+7 Escrow releases payment
+8 Task completes
 ```
 
-### Pages
+If dispute occurs:
 
 ```
-admin/
-employer/
-freelancer/
-public/
-legal/
-misc/
-```
-
----
-
-### Components
-
-```
-Navbar.jsx
-NotificationDropdown.jsx
-ChatLayout.jsx
-ChatSidebar.jsx
-ChatWindow.jsx
-RatingModal.jsx
-AdminLayout.jsx
-```
-
----
-
-### Services
-
-```
-api.js
-chatService.js
-socket.js
+Escrow held until admin resolution
 ```
 
 ---
 
-### Context
+# Employer Dashboard
+
+Employer dashboard organizes tasks by lifecycle state.
+
+Sections:
 
 ```
-AuthContext.jsx
+Open Tasks
+Assigned
+In Progress
+Submitted
+Revision Requested
+Approved
+Completed
+Cancelled
+Disputed
+```
+
+Employer actions include:
+
+```
+assign freelancer
+request revision
+approve submission
+cancel task
+complete task
+raise dispute
 ```
 
 ---
 
-# IMPORTANT DEVELOPMENT RULES
+# Freelancer Dashboard
 
-Before modifying code:
+Freelancers track work through dashboard sections.
 
-1. Analyze the full codebase
-2. Ask for the relevant file
-3. Return the **FULL updated file** Unless it is bigger than ~200 lines. If it is bigger than ~200 lines then you can give the code snippet and the exact details of where to paste the code (after what and before what).
-4. Avoid breaking existing features (very important)
-5. Maintain architecture
+Sections:
 
 ```
-Controller → Service → Repository
+Applied
+Assigned
+In Progress
+Submitted
+Revision Requested
+Approved
+Completed
+Cancelled
+Disputed
+Rejected
 ```
 
-Backward compatibility must be preserved.
-
----
-
-# CURRENT SYSTEM STATUS
-
-Platform core features are **fully functional**.
-
-Working systems:
-
-Authentication
-Task marketplace
-Applications
-Freelancer assignment
-Task completion
-Ratings
-Notifications
-Admin moderation
-Pagination
-
----
-
-# Newly Implemented System
-
-Realtime Chat System
-
-Features include:
-
-Realtime messaging
-Typing indicator
-Delivery ticks
-Grouped messages
-Keyboard send
-Auto-focus input
-Socket lifecycle cleanup
-Duplicate message prevention
-
----
-
-# CURRENT DEVELOPMENT TARGET
-
-Next major features planned:
-
-Realtime notifications via Socket.IO.
-
-Requirements:
-
-Must work with:
+Freelancer actions include:
 
 ```
-Render backend
-Vercel frontend
+apply to task
+start task
+submit work
+resubmit work
+raise dispute
 ```
 
-Polling fallback must remain active.
+---
+
+# Security Rules
+
+Platform enforces multiple security rules.
+
+Examples:
+
+```
+API authentication required
+role-based authorization
+duplicate applications prevented
+single escrow per task
+submission allowed only in correct task state
+```
 
 ---
 
-# LONG TERM ROADMAP
+# Frontend Task Engine
 
-Future development goals:
+The frontend uses a **Task Action Engine** that determines which actions are available based on:
 
-Escrow payment system
-File attachments in chat
-Conversation unread separator
-Message reactions
-Admin chat moderation
-Search in chat
-Mobile responsive improvements
-Email notifications
+```
+task status
+user role
+```
+
+Example:
+
+```
+assigned → freelancer can start task
+in_progress → freelancer can submit work
+submitted → employer can approve or request revision
+approved → employer can complete task
+```
+
+This ensures the UI always reflects the backend lifecycle.
 
 ---
+
+# Current Development Stage
+
+### Backend
+
+Completed:
+
+* Task lifecycle system
+* Applications
+* Submissions
+* Escrow preparation
+* Timeline logging
+* Notifications
+* Activity tracking
+
+---
+
+### Frontend
+
+Completed:
+
+* Employer dashboard
+* Freelancer dashboard
+* Task browsing
+* Authentication system
+* Task lifecycle UI
+* Task action engine
+* Timeline viewer
+
+---
+
+# Upcoming Features
+
+Next development phases include:
+
+### Payment Integration
+
+```
+bKash
+Nagad
+SSLCommerz
+```
+
+---
+
+### Wallet System
+
+```
+user wallet
+withdrawals
+platform commission
+transaction history
+```
+
+---
+
+### Messaging System
+
+```
+employer ↔ freelancer chat
+task-specific conversations
+file sharing
+```
+
+---
+
+### Admin Moderation
+
+```
+dispute resolution
+user management
+task moderation
+payment monitoring
+```
+
+---
+
+# Development Rules
+
+AI assisting development must follow strict rules:
+
+1. Always analyze the existing codebase first.
+
+2. Never assume missing information.
+
+3. Always maintain architecture:
+
+```
+Controller → Service → Repository → Database
+```
+
+4. Do not break existing features.
+
+5. Prefer minimal safe changes.
+
+6. When returning code:
+
+* return full file if under 200 lines
+* otherwise give exact insertion instructions
+
+---
+
+# Summary
+
+EarnMinute is a **structured freelance micro-task platform** built with:
+
+* scalable backend architecture
+* strict lifecycle control
+* escrow payment protection
+* modular React frontend
+* role-based dashboards
+
+The system is designed to support **high-volume micro-tasks with secure payments and clear workflows.**

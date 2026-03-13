@@ -1,52 +1,47 @@
 const taskRepository = require("../repositories/taskRepository");
-const Application = require("../models/Application");
-const Task = require("../models/Task");
 const notificationService = require("./notificationService");
 const activityService = require("./activityService");
-const User = require("../models/User");
+const userRepository = require("../repositories/userRepository");
+
+const TASK_STATES = require("../domain/task/taskStates");
+const validateTaskTransition = require("../domain/task/taskValidator");
+const taskSubmissionRepository = require("../repositories/taskSubmissionRepository");
+const escrowRepository = require("../repositories/escrowRepository");
+const escrowService = require("./escrowService");
+const taskTimelineService = require("./taskTimelineService");
 
 /* ===============================
    CREATE TASK
 ================================ */
 const createTask = async (employerId, data) => {
-
   const task = await taskRepository.createTask({
     ...data,
     employer: employerId,
-    status: "open",
+    status: TASK_STATES.OPEN,
     isDeleted: false,
-    isRated: false
+    isRated: false,
   });
 
-  /* ===============================
-   LOG ACTIVITY
-  ================================ */
+  const employer = await userRepository.findById(employerId);
 
-const User = require("../models/User");
+  if (employer) {
+    await activityService.logActivity({
+      type: "task_posted",
+      userId: employer._id,
+      userName: employer.name,
+      taskId: task._id,
+      taskTitle: task.title,
+    });
+  }
 
-const employer = await User.findById(employerId);
-
-if (employer) {
-  await activityService.logActivity({
-    type: "task_posted",
-    userId: employer._id,
-    userName: employer.name,
-    taskId: task._id,
-    taskTitle: task.title
-  });
-}
-
-  /* ===============================
-     NOTIFY ADMINS
-  ================================ */
-  const admins = await require("../models/User").find({ role: "admin" });
+  const admins = await userRepository.findByRole("admin");
 
   for (const admin of admins) {
     await notificationService.createNotification({
       user: admin._id,
       type: "task_created",
       message: `A new task "${task.title}" has been posted`,
-      link: `/task/${task._id}`
+      link: `/task/${task._id}`,
     });
   }
 
@@ -54,135 +49,148 @@ if (employer) {
 };
 
 /* ===============================
-   GET ALL TASKS (WITH SEARCH)
+   ACCEPT TASK (Freelancer starts work)
 ================================ */
-const getAllTasks = async (queryParams) => {
+const acceptTask = async (taskId, freelancerId) => {
+  const task = await taskRepository.findById(taskId);
 
-  const page = queryParams.page ? Number(queryParams.page) : null;
+  if (!task) throw new Error("Task not found");
 
-  const filters = {
-    search: queryParams.search || null,
-    skill: queryParams.skill || null,
-    minBudget: queryParams.minBudget || null,
-    maxBudget: queryParams.maxBudget || null
-  };
-
-  const hasFilters =
-    filters.search ||
-    filters.skill ||
-    filters.minBudget ||
-    filters.maxBudget;
-
-  const tasks = hasFilters
-    ? await taskRepository.searchTasks(filters)
-    : await taskRepository.getAllOpenTasks();
-
-  if (!page) return tasks;
-
-  const limit = 20;
-  const start = (page - 1) * limit;
-
-  const paginatedTasks = tasks.slice(start, start + limit);
-
-  return {
-    page,
-    totalPages: Math.ceil(tasks.length / limit),
-    totalTasks: tasks.length,
-    tasks: paginatedTasks
-  };
-
-};
-
-
-/* ===============================
-   GET SINGLE TASK
-================================ */
-const getTaskById = async (taskId) => {
-
-  const task = await taskRepository.getTaskById(taskId);
-
-  if (!task) {
-    throw new Error("Task not found");
+  if (!task.assignedFreelancer) {
+    throw new Error("No freelancer assigned to this task");
   }
 
-  return task;
+  if (task.assignedFreelancer.toString() !== freelancerId.toString()) {
+    throw new Error("Not authorized");
+  }
 
-};
+  validateTaskTransition(task.status, TASK_STATES.IN_PROGRESS);
 
-/* ===============================
-   GET EMPLOYER DASHBOARD
-================================ */
-const getEmployerDashboard = async (employerId) => {
+  /* ===============================
+    CHECK ESCROW FUNDED
+  ================================ */
 
-  const tasks = await taskRepository.getEmployerTasks(employerId);
+  const escrow = await escrowRepository.findByTaskId(taskId);
 
-  const open = [];
-  const assigned = [];
-  const completed = [];
+  if (!escrow) {
+    throw new Error("Escrow record not found for this task");
+  }
 
-  tasks.forEach((task) => {
+  if (escrow.status !== "funded") {
+    throw new Error("Task cannot start until payment is funded");
+  }
 
-    if (task.status === "open") open.push(task);
-    if (task.status === "assigned") assigned.push(task);
-    if (task.status === "completed") completed.push(task);
+  const updatedTask = await taskRepository.updateTaskStatus(
+    taskId,
+    TASK_STATES.IN_PROGRESS,
+  );
 
+  await taskTimelineService.logEvent({
+    taskId: taskId,
+    userId: freelancerId,
+    type: "task_started",
+    message: "Freelancer started working on the task",
   });
 
-  return { open, assigned, completed };
+  return updatedTask;
 };
 
 /* ===============================
-   COMPLETE TASK
+   SUBMIT TASK WORK
 ================================ */
-const completeTask = async (taskId) => {
-
+const submitTask = async (taskId, freelancerId, submissionData) => {
   const task = await taskRepository.findById(taskId);
 
   if (!task) {
     throw new Error("Task not found");
   }
 
-  if (task.status !== "assigned") {
-    throw new Error("Task must be assigned before completing");
+  if (!task.assignedFreelancer) {
+    throw new Error("No freelancer assigned to this task");
   }
 
-  task.status = "completed";
-  task.isRated = false;
-
-  await taskRepository.saveTask(task);
-
-  const freelancer = await User.findById(task.assignedFreelancer);
-
-if (freelancer) {
-  await activityService.logActivity({
-    type: "task_completed",
-    userId: freelancer._id,
-    userName: freelancer.name,
-    taskId: task._id,
-    taskTitle: task.title
-  });
-}
+  if (task.assignedFreelancer.toString() !== freelancerId.toString()) {
+    throw new Error("Not authorized");
+  }
 
   /* ===============================
-     NOTIFY FREELANCER
-  ================================ */
-  if (task.assignedFreelancer) {
-    await notificationService.createNotification({
-  user: task.assignedFreelancer,
-  type: "task_completed",
-  message: `Task "${task.title}" has been marked as completed`,
-  link: `/task/${task._id}`
-});
+   ENSURE TASK IS IN PROGRESS
+================================ */
+
+  if (
+    task.status !== TASK_STATES.IN_PROGRESS &&
+    task.status !== TASK_STATES.REVISION_REQUESTED
+  ) {
+    throw new Error(
+      "Task must be in progress or revision requested to submit work",
+    );
   }
 
-  return task;
+  validateTaskTransition(task.status, TASK_STATES.SUBMITTED);
+
+  /* create submission */
+
+  const submission = await taskSubmissionRepository.createSubmission({
+    task: taskId,
+    freelancer: freelancerId,
+    message: submissionData.message || "",
+    links: submissionData.links || [],
+    files: submissionData.files || [],
+    screenshots: submissionData.screenshots || [],
+  });
+
+  /* update task status */
+
+  const updatedTask = await taskRepository.updateTaskStatus(
+    taskId,
+    TASK_STATES.SUBMITTED,
+    {
+      submittedAt: new Date(),
+    },
+  );
+
+  /* notify employer */
+
+  try {
+    await notificationService.createNotification({
+      user: task.employer,
+      type: "task_submitted",
+      message: `Work submitted for task "${task.title}"`,
+      link: `/task/${taskId}`,
+    });
+  } catch (err) {}
+
+  /* activity log */
+
+  const freelancer = await userRepository.findById(freelancerId);
+
+  if (freelancer) {
+    await activityService.logActivity({
+      type: "task_submitted",
+      userId: freelancer._id,
+      userName: freelancer.name,
+      taskId: task._id,
+      taskTitle: task.title,
+    });
+  }
+
+  await taskTimelineService.logEvent({
+    taskId: taskId,
+    userId: freelancerId,
+    type: "task_submitted",
+    message: "Freelancer submitted work for review",
+  });
+
+  return {
+    task: updatedTask,
+    submission,
+  };
 };
 
 /* ===============================
-   RATE FREELANCER
+   REQUEST REVISION
 ================================ */
-const rateFreelancer = async (taskId, employerId, rating, review) => {
-
+const requestRevision = async (taskId, employerId) => {
   const task = await taskRepository.findById(taskId);
 
   if (!task) throw new Error("Task not found");
@@ -191,196 +199,330 @@ const rateFreelancer = async (taskId, employerId, rating, review) => {
     throw new Error("Not authorized");
   }
 
-  if (task.status !== "completed") {
-    throw new Error("Task must be completed before rating");
-  }
+  validateTaskTransition(task.status, TASK_STATES.REVISION_REQUESTED);
 
-  if (task.isRated) {
-    throw new Error("Task already rated");
-  }
-
-  task.isRated = true;
-  task.rating = rating;
-  task.review = review;
-
-  await taskRepository.saveTask(task);
-
-  /* ===============================
-     UPDATE FREELANCER RATING
-  ================================ */
-
-  const User = require("../models/User");
-
-  const freelancerId = task.assignedFreelancer;
-
-  const ratedTasks = await Task.find({
-    assignedFreelancer: freelancerId,
-    isRated: true
+  await taskTimelineService.logEvent({
+    taskId: taskId,
+    userId: employerId,
+    type: "revision_requested",
+    message: "Employer requested a revision",
   });
 
-  const totalReviews = ratedTasks.length;
+  return await taskRepository.updateTaskStatus(
+    taskId,
+    TASK_STATES.REVISION_REQUESTED,
+  );
+};
 
-  const totalRating = ratedTasks.reduce((sum, t) => sum + t.rating, 0);
+/* ===============================
+   APPROVE SUBMISSION
+================================ */
+const approveSubmission = async (taskId, employerId) => {
+  const task = await taskRepository.findById(taskId);
 
-  const average = totalReviews > 0
-    ? (totalRating / totalReviews).toFixed(1)
-    : 0;
+  if (!task) throw new Error("Task not found");
 
-  await User.findByIdAndUpdate(freelancerId, {
-    rating: {
-      average,
-      count: totalReviews
+  if (task.employer.toString() !== employerId.toString()) {
+    throw new Error("Not authorized");
+  }
+
+  validateTaskTransition(task.status, TASK_STATES.APPROVED);
+
+  /* ===============================
+   VERIFY SUBMISSION EXISTS
+================================ */
+
+  const latestSubmission =
+    await taskSubmissionRepository.getLatestSubmission(taskId);
+
+  if (!latestSubmission) {
+    throw new Error("Cannot approve task without a submission");
+  }
+
+  /* ===============================
+   RELEASE ESCROW
+================================ */
+
+  try {
+    await escrowService.releaseEscrow(taskId);
+  } catch (err) {
+    console.error("Escrow release failed:", err.message);
+  }
+
+  await taskTimelineService.logEvent({
+    taskId: taskId,
+    userId: employerId,
+    type: "task_approved",
+    message: "Employer approved the submitted work",
+  });
+
+  /* ===============================
+   MARK TASK APPROVED
+================================ */
+
+  const approvedTask = await taskRepository.updateTaskStatus(
+    taskId,
+    TASK_STATES.APPROVED,
+    {
+      approvedAt: new Date(),
+    },
+  );
+
+  return approvedTask;
+};
+
+/* ===============================
+   COMPLETE TASK
+================================ */
+const completeTask = async (taskId) => {
+  const task = await taskRepository.findById(taskId);
+
+  if (!task) throw new Error("Task not found");
+
+  validateTaskTransition(task.status, TASK_STATES.COMPLETED);
+
+  const updatedTask = await taskRepository.updateTaskStatus(
+    taskId,
+    TASK_STATES.COMPLETED,
+  );
+
+  const freelancer = await userRepository.findById(task.assignedFreelancer);
+
+  if (freelancer) {
+    await activityService.logActivity({
+      type: "task_completed",
+      userId: freelancer._id,
+      userName: freelancer.name,
+      taskId: task._id,
+      taskTitle: task.title,
+    });
+  }
+
+  return updatedTask;
+};
+
+/* ===============================
+   CANCEL TASK
+================================ */
+const cancelTask = async (taskId, userId, role) => {
+  const task = await taskRepository.findById(taskId);
+
+  if (!task) throw new Error("Task not found");
+
+  if (role === "freelancer") {
+    if (task.assignedFreelancer.toString() !== userId.toString()) {
+      throw new Error("Not authorized");
+    }
+  }
+
+  if (role === "employer") {
+    if (task.employer.toString() !== userId.toString()) {
+      throw new Error("Not authorized");
+    }
+
+    if (task.status === TASK_STATES.IN_PROGRESS) {
+      throw new Error("Employer cannot cancel after work started");
+    }
+  }
+
+  validateTaskTransition(task.status, TASK_STATES.CANCELLED);
+
+  return await taskRepository.updateTaskStatus(taskId, TASK_STATES.CANCELLED);
+};
+
+/* ===============================
+   RAISE DISPUTE
+================================ */
+const raiseDispute = async (taskId, userId) => {
+  const task = await taskRepository.findById(taskId);
+
+  if (!task) throw new Error("Task not found");
+
+  if (
+    task.employer.toString() !== userId.toString() &&
+    (!task.assignedFreelancer ||
+      task.assignedFreelancer.toString() !== userId.toString())
+  ) {
+    throw new Error("Not authorized");
+  }
+
+  validateTaskTransition(task.status, TASK_STATES.DISPUTED);
+
+  return await taskRepository.updateTaskStatus(taskId, TASK_STATES.DISPUTED);
+};
+
+/* ===============================
+   GET EMPLOYER DASHBOARD
+================================ */
+const getEmployerDashboard = async (employerId) => {
+  const tasks = await taskRepository.getEmployerTasks(employerId);
+
+  const open = [];
+  const assigned = [];
+  const in_progress = [];
+  const submitted = [];
+  const revision_requested = [];
+  const approved = [];
+  const completed = [];
+  const cancelled = [];
+  const disputed = [];
+
+  tasks.forEach((task) => {
+    switch (task.status) {
+      case "open":
+        open.push(task);
+        break;
+
+      case "assigned":
+        assigned.push(task);
+        break;
+
+      case "in_progress":
+        in_progress.push(task);
+        break;
+
+      case "submitted":
+        submitted.push(task);
+        break;
+
+      case "revision_requested":
+        revision_requested.push(task);
+        break;
+
+      case "approved":
+        approved.push(task);
+        break;
+
+      case "completed":
+        completed.push(task);
+        break;
+
+      case "cancelled":
+        cancelled.push(task);
+        break;
+
+      case "disputed":
+        disputed.push(task);
+        break;
     }
   });
 
-  /* ===============================
-     NOTIFY FREELANCER
-  ================================ */
+  return {
+    open,
+    assigned,
+    in_progress,
+    submitted,
+    revision_requested,
+    approved,
+    completed,
+    cancelled,
+    disputed,
+  };
+};
 
-  if (task.assignedFreelancer) {
-    await notificationService.createNotification({
-      user: task.assignedFreelancer,
-      type: "rating_received",
-      message: `You received a rating for task "${task.title}"`,
-      link: `/task/${task._id}`
+/* ===============================
+   GET ALL TASKS
+================================ */
+const getAllTasks = async (query) => {
+  const { search, skill, minBudget, maxBudget } = query || {};
+
+  const hasFilters = search || skill || minBudget || maxBudget;
+
+  if (hasFilters) {
+    return await taskRepository.searchTasks({
+      search,
+      skill,
+      minBudget,
+      maxBudget,
     });
+  }
+
+  return await taskRepository.getAllOpenTasks();
+};
+
+/* ===============================
+   GET TASK BY ID
+================================ */
+const getTaskById = async (taskId) => {
+  const task = await taskRepository.getTaskById(taskId);
+
+  if (!task) {
+    throw new Error("Task not found");
   }
 
   return task;
 };
 
 /* ===============================
-   ADMIN GET TASKS (OPTIMIZED)
+   GET TASK TIMELINE
 ================================ */
-const getAllTasksAdmin = async (page) => {
+const getTaskTimeline = async (taskId) => {
+  const task = await taskRepository.findById(taskId);
 
-  const limit = 20;
-  const skip = page ? (page - 1) * limit : 0;
+  if (!task || task.isDeleted) {
+    throw new Error("Task not found");
+  }
 
-  const tasks = await Task.aggregate([
+  return await taskTimelineService.getTaskTimeline(taskId);
+};
 
-    {
-      $match: { isDeleted: { $ne: true } }
-    },
+/* ===============================
+   RATE FREELANCER
+================================ */
+const rateFreelancer = async (taskId, employerId, rating, review) => {
+  const task = await taskRepository.findById(taskId);
 
-    {
-      $lookup: {
-        from: "users",
-        localField: "employer",
-        foreignField: "_id",
-        as: "employer"
-      }
-    },
+  if (!task) throw new Error("Task not found");
 
-    {
-      $unwind: {
-        path: "$employer",
-        preserveNullAndEmptyArrays: true
-      }
-    },
+  if (task.employer.toString() !== employerId.toString()) {
+    throw new Error("Not authorized");
+  }
 
-    {
-      $lookup: {
-        from: "users",
-        localField: "assignedFreelancer",
-        foreignField: "_id",
-        as: "assignedFreelancer"
-      }
-    },
+  if (task.status !== TASK_STATES.COMPLETED) {
+    throw new Error("Task must be completed before rating");
+  }
 
-    {
-      $unwind: {
-        path: "$assignedFreelancer",
-        preserveNullAndEmptyArrays: true
-      }
-    },
+  task.isRated = true;
+  task.rating = rating;
+  task.review = review;
 
-    {
-      $lookup: {
-        from: "applications",
-        localField: "_id",
-        foreignField: "task",
-        as: "applications"
-      }
-    },
+  return await taskRepository.saveTask(task);
+};
 
-    {
-      $lookup: {
-        from: "users",
-        localField: "applications.freelancer",
-        foreignField: "_id",
-        as: "freelancers"
-      }
-    },
-
-    {
-      $sort: { createdAt: -1 }
-    }
-
-  ]);
-
-  const formattedTasks = tasks.map((task) => {
-
-    const applications = task.applications.map((app) => {
-
-      const freelancer = task.freelancers.find(
-        (f) => f._id.toString() === app.freelancer.toString()
-      );
-
-      return {
-        ...app,
-        freelancer: freelancer
-          ? { _id: freelancer._id, name: freelancer.name, rating: freelancer.rating }
-          : null
-      };
-
-    });
-
-    return {
-      ...task,
-      applications
-    };
-
-  });
-
-  if (!page) return formattedTasks;
-
-  const paginated = formattedTasks.slice(skip, skip + limit);
-
-  return {
-    page,
-    totalPages: Math.ceil(formattedTasks.length / limit),
-    totalTasks: formattedTasks.length,
-    tasks: paginated
-  };
-
+/* ===============================
+   ADMIN GET TASKS
+================================ */
+const getAllTasksAdmin = async () => {
+  return await taskRepository.getAllTasksAdmin();
 };
 
 /* ===============================
    DELETE TASK
 ================================ */
 const deleteTask = async (taskId) => {
-
   const task = await taskRepository.findById(taskId);
 
-  if (!task) {
-    throw new Error("Task not found");
-  }
+  if (!task) throw new Error("Task not found");
 
   task.isDeleted = true;
 
-  await taskRepository.saveTask(task);
-
-  return true;
+  return await taskRepository.saveTask(task);
 };
 
 module.exports = {
   createTask,
   getAllTasks,
   getTaskById,
+  getTaskTimeline,
   getEmployerDashboard,
+  acceptTask,
+  submitTask,
+  requestRevision,
+  approveSubmission,
   completeTask,
+  cancelTask,
+  raiseDispute,
   rateFreelancer,
   getAllTasksAdmin,
-  deleteTask
+  deleteTask,
 };

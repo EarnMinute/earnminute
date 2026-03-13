@@ -2,7 +2,6 @@ const Application = require("../models/Application");
 const Task = require("../models/Task");
 const User = require("../models/User");
 const applicationService = require("../services/applicationService");
-const notificationService = require("../services/notificationService");
 
 /* ===============================
    APPLY TO TASK
@@ -12,22 +11,15 @@ exports.applyToTask = async (req, res) => {
     const taskId = req.params.taskId;
     const freelancerId = req.user._id;
 
-    const task = await Task.findById(taskId);
-
-    if (!task || task.status !== "open") {
-      return res.status(400).json({ message: "Task not available" });
-    }
-
     const application = await applicationService.applyToTask(
       taskId,
-      freelancerId
+      freelancerId,
     );
 
     res.status(201).json({
       message: "Applied successfully",
       application,
     });
-
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -44,7 +36,6 @@ exports.getApplicationsForTask = async (req, res) => {
     }).populate("freelancer", "name rating");
 
     res.status(200).json({ applications });
-
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -56,77 +47,15 @@ exports.getApplicationsForTask = async (req, res) => {
 exports.assignFreelancer = async (req, res) => {
   try {
     const { taskId, applicationId } = req.params;
+    const employerId = req.user._id;
 
-    const task = await Task.findById(taskId);
-
-    if (!task) {
-      return res.status(404).json({ message: "Task not found" });
-    }
-
-    if (task.status === "assigned") {
-      return res.status(400).json({ message: "Task already assigned" });
-    }
-
-    const selectedApplication = await Application.findById(applicationId);
-
-    if (!selectedApplication) {
-      return res.status(404).json({ message: "Application not found" });
-    }
-
-    task.status = "assigned";
-    task.assignedFreelancer = selectedApplication.freelancer;
-    await task.save();
-
-    selectedApplication.status = "assigned";
-    await selectedApplication.save();
-
-    await Application.updateMany(
-      { task: taskId, _id: { $ne: applicationId } },
-      { status: "rejected" }
+    const result = await applicationService.assignFreelancer(
+      taskId,
+      applicationId,
+      employerId,
     );
 
-    /* ===============================
-       NOTIFY ASSIGNED FREELANCER
-    ================================ */
-    const notificationService = require("../services/notificationService");
-
-    try {
-  await notificationService.createNotification({
-    user: selectedApplication.freelancer,
-    type: "task_assigned",
-    message: `You have been assigned to task "${task.title}"`,
-    link: `/task/${taskId}`,
-  });
-} catch (err) {
-  console.error("Notification failed:", err.message);
-}
-
-    /* ===============================
-       NOTIFY REJECTED FREELANCERS
-    ================================ */
-    const rejectedApplications = await Application.find({
-      task: taskId,
-      status: "rejected",
-    });
-
-    for (const app of rejectedApplications) {
-  try {
-    await notificationService.createNotification({
-      user: app.freelancer,
-      type: "application_rejected",
-      message: `Your application was not selected for task "${task.title}"`,
-      link: `/task/${taskId}`,
-    });
-  } catch (err) {
-    console.error("Rejected notification failed:", err.message);
-  }
-}
-
-    res.status(200).json({
-      success: true,
-      message: "Freelancer assigned successfully",
-    });
-
+    res.status(200).json(result);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -139,9 +68,8 @@ exports.getFreelancerDashboard = async (req, res) => {
   try {
     const freelancerId = req.user._id;
 
-    const freelancer = await User.findById(freelancerId).select(
-      "name email rating"
-    );
+    const freelancer =
+      await User.findById(freelancerId).select("name email rating");
 
     const applications = await Application.find({
       freelancer: freelancerId,
@@ -157,7 +85,13 @@ exports.getFreelancerDashboard = async (req, res) => {
 
     const applied = [];
     const assigned = [];
+    const in_progress = [];
+    const submitted = [];
+    const revision_requested = [];
+    const approved = [];
     const completed = [];
+    const cancelled = [];
+    const disputed = [];
     const rejected = [];
 
     applications.forEach((app) => {
@@ -165,15 +99,26 @@ exports.getFreelancerDashboard = async (req, res) => {
 
       if (app.status === "rejected") {
         rejected.push(app);
-      } 
-      else if (app.status === "assigned" && app.task.status === "completed") {
-        completed.push(app);
+        return;
       }
-      else if (app.status === "assigned") {
-        assigned.push(app);
-      } 
-      else {
+
+      if (app.status === "applied") {
         applied.push(app);
+        return;
+      }
+
+      if (app.status === "accepted") {
+        const status = app.task.status;
+
+        if (status === "assigned") assigned.push(app);
+        else if (status === "in_progress") in_progress.push(app);
+        else if (status === "submitted") submitted.push(app);
+        else if (status === "revision_requested") revision_requested.push(app);
+        else if (status === "approved") approved.push(app);
+        else if (status === "completed") completed.push(app);
+        else if (status === "cancelled") cancelled.push(app);
+        else if (status === "disputed") disputed.push(app);
+        else assigned.push(app);
       }
     });
 
@@ -181,10 +126,15 @@ exports.getFreelancerDashboard = async (req, res) => {
       freelancer,
       applied,
       assigned,
+      in_progress,
+      submitted,
+      revision_requested,
+      approved,
       completed,
+      cancelled,
+      disputed,
       rejected,
     });
-
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -208,7 +158,6 @@ exports.getAllApplicationsAdmin = async (req, res) => {
       .sort({ createdAt: -1 });
 
     res.status(200).json(applications);
-
   } catch (error) {
     res.status(500).json({
       message: "Failed to fetch applications",

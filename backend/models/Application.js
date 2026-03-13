@@ -1,16 +1,23 @@
 const mongoose = require("mongoose");
 
-const applicationSchema = new mongoose.Schema({
-  task: { type: mongoose.Schema.Types.ObjectId, ref: "Task", required: true },
-  freelancer: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+const applicationSchema = new mongoose.Schema(
+  {
+    task: { type: mongoose.Schema.Types.ObjectId, ref: "Task", required: true },
 
-  status: {
-    type: String,
-    enum: ["applied", "assigned", "rejected"],
-    default: "applied",
+    freelancer: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+
+    status: {
+      type: String,
+      enum: ["applied", "accepted", "rejected", "withdrawn"],
+      default: "applied",
+    },
   },
-
-}, { timestamps: true });
+  { timestamps: true }
+);
 
 /* ===============================
    INDEXES

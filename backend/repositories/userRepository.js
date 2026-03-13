@@ -15,6 +15,13 @@ const findById = async (id) => {
 };
 
 /* ===============================
+   FIND USERS BY ROLE
+================================ */
+const findByRole = async (role) => {
+  return User.find({ role });
+};
+
+/* ===============================
    CREATE USER
 ================================ */
 const createUser = async (data) => {
@@ -31,6 +38,7 @@ const saveUser = async (user) => {
 module.exports = {
   findByEmail,
   findById,
+  findByRole,
   createUser,
-  saveUser
+  saveUser,
 };

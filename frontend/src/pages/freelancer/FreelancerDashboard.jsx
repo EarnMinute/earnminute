@@ -1,12 +1,21 @@
 import { useEffect, useState } from "react";
 import API from "@/services/api";
 import { Link } from "react-router-dom";
+import { FREELANCER_DASHBOARD_TABS } from "@/utils/taskStates";
+import TaskActionButtons from "@/components/tasks/TaskActionButtons";
+import TaskTimeline from "@/components/tasks/TaskTimeline";
 
 function FreelancerDashboard() {
   const [dashboard, setDashboard] = useState({
     applied: [],
     assigned: [],
+    in_progress: [],
+    submitted: [],
+    revision_requested: [],
+    approved: [],
     completed: [],
+    cancelled: [],
+    disputed: [],
     rejected: [],
   });
 
@@ -26,7 +35,13 @@ function FreelancerDashboard() {
       setDashboard({
         applied: res.data.applied || [],
         assigned: res.data.assigned || [],
+        in_progress: res.data.in_progress || [],
+        submitted: res.data.submitted || [],
+        revision_requested: res.data.revision_requested || [],
+        approved: res.data.approved || [],
         completed: res.data.completed || [],
+        cancelled: res.data.cancelled || [],
+        disputed: res.data.disputed || [],
         rejected: res.data.rejected || [],
       });
     } catch (error) {
@@ -36,12 +51,7 @@ function FreelancerDashboard() {
     }
   };
 
-  const menuItems = [
-    { key: "applied", label: "Applied Tasks" },
-    { key: "assigned", label: "Assigned Tasks" },
-    { key: "completed", label: "Completed Tasks" },
-    { key: "rejected", label: "Rejected Tasks" },
-  ];
+  const menuItems = FREELANCER_DASHBOARD_TABS;
 
   const renderTasks = (tasks, badgeColor, badgeText) => {
     if (!tasks.length) {
@@ -72,6 +82,15 @@ function FreelancerDashboard() {
         <span className={`px-3 py-1 text-xs rounded-full ${badgeColor}`}>
           {badgeText}
         </span>
+
+        <div className="mt-3">
+          <TaskActionButtons
+            task={app.task}
+            userRole="freelancer"
+            onActionSuccess={fetchDashboard}
+          />
+        </div>
+        <TaskTimeline taskId={app.task._id} />
       </div>
     ));
   };
@@ -119,6 +138,48 @@ function FreelancerDashboard() {
                 dashboard.assigned,
                 "bg-green-100 text-green-700",
                 "Assigned",
+              )}
+
+            {activeTab === "in_progress" &&
+              renderTasks(
+                dashboard.in_progress,
+                "bg-blue-100 text-blue-700",
+                "In Progress",
+              )}
+
+            {activeTab === "submitted" &&
+              renderTasks(
+                dashboard.submitted,
+                "bg-yellow-100 text-yellow-700",
+                "Submitted",
+              )}
+
+            {activeTab === "revision_requested" &&
+              renderTasks(
+                dashboard.revision_requested,
+                "bg-orange-100 text-orange-700",
+                "Revision Requested",
+              )}
+
+            {activeTab === "approved" &&
+              renderTasks(
+                dashboard.approved,
+                "bg-green-200 text-green-800",
+                "Approved",
+              )}
+
+            {activeTab === "cancelled" &&
+              renderTasks(
+                dashboard.cancelled,
+                "bg-gray-200 text-gray-700",
+                "Cancelled",
+              )}
+
+            {activeTab === "disputed" &&
+              renderTasks(
+                dashboard.disputed,
+                "bg-red-100 text-red-700",
+                "Disputed",
               )}
 
             {activeTab === "completed" &&
