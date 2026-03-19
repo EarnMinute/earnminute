@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 import { FREELANCER_DASHBOARD_TABS } from "@/utils/taskStates";
 import TaskActionButtons from "@/components/tasks/TaskActionButtons";
 import TaskTimeline from "@/components/tasks/TaskTimeline";
+import TaskCard from "@/components/tasks/TaskCard";
+import EscrowStatus from "@/components/tasks/EscrowStatus";
 
 function FreelancerDashboard() {
   const [dashboard, setDashboard] = useState({
@@ -55,43 +57,21 @@ function FreelancerDashboard() {
 
   const renderTasks = (tasks, badgeColor, badgeText) => {
     if (!tasks.length) {
-      return (
-        <p className="text-gray-500 text-sm mt-4">No tasks in this section.</p>
-      );
+      return <p className="text-gray-500 text-sm mt-4">No tasks.</p>;
     }
 
-    return tasks.map((app, index) => (
-      <div
+    return tasks.map((app) => (
+      <TaskCard
         key={app._id}
-        className="bg-white p-6 rounded-xl shadow-md mb-6 flex justify-between items-center"
-      >
-        <div>
-          <h3 className="font-semibold">
-            {index + 1}. {app.task?.title}
-          </h3>
-
-          <p className="text-sm text-gray-600 mt-1">
-            Budget: ৳ {app.task?.budgetAmount}
-          </p>
-
-          <p className="text-sm text-gray-500 mt-1">
-            Employer: {app.task?.employer?.name}
-          </p>
-        </div>
-
-        <span className={`px-3 py-1 text-xs rounded-full ${badgeColor}`}>
-          {badgeText}
-        </span>
-
-        <div className="mt-3">
-          <TaskActionButtons
-            task={app.task}
-            userRole="freelancer"
-            onActionSuccess={fetchDashboard}
-          />
-        </div>
-        <TaskTimeline taskId={app.task._id} />
-      </div>
+        task={app.task}
+        role="freelancer"
+        badge={
+          <span className={`px-3 py-1 text-xs rounded-full ${badgeColor}`}>
+            {badgeText}
+          </span>
+        }
+        onActionSuccess={fetchDashboard}
+      />
     ));
   };
 

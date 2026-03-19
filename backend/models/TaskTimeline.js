@@ -6,7 +6,6 @@ const taskTimelineSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Task",
       required: true,
-      index: true,
     },
 
     user: {
@@ -37,6 +36,7 @@ const taskTimelineSchema = new mongoose.Schema(
    INDEXES
 ================================ */
 
+// Fetch timeline events in order
 taskTimelineSchema.index({ task: 1, createdAt: -1 });
 
 module.exports = mongoose.model("TaskTimeline", taskTimelineSchema);

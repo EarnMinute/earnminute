@@ -8,38 +8,39 @@ const activitySchema = new mongoose.Schema(
         "user_joined",
         "task_posted",
         "task_applied",
-        "task_completed"
+        "task_completed",
+        "task_submitted",
       ],
       required: true,
-      index: true
     },
 
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true
+      required: true,
     },
 
     userName: {
       type: String,
-      required: true
+      required: true,
     },
 
     taskId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Task",
-      default: null
+      default: null,
     },
 
     taskTitle: {
       type: String,
-      default: null
-    }
-
+      default: null,
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
+// Indexes (centralized)
+activitySchema.index({ type: 1 });
 activitySchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model("Activity", activitySchema);

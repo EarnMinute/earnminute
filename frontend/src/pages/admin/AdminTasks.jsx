@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import useAdminTasks from "@/hooks/admin/useAdminTasks";
 import AdminTable from "@/components/admin/AdminTable";
+import API from "@/services/api";
 
 function AdminTasks() {
   const {
@@ -96,12 +97,30 @@ function AdminTasks() {
       key: "action",
       label: "Action",
       render: (task) => (
-        <button
-          onClick={() => deleteTask(task._id)}
-          className="text-red-500 hover:text-red-700"
-        >
-          Delete
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => deleteTask(task._id)}
+            className="text-red-500 hover:text-red-700"
+          >
+            Delete
+          </button>
+
+          {task.status === "assigned" && task.escrowStatus !== "funded" && (
+            <button
+              onClick={async () => {
+                try {
+                  await API.patch(`/escrow/${task._id}/fund`);
+                  alert("Escrow funded successfully");
+                } catch (err) {
+                  alert(err.response?.data?.message || "Failed to fund escrow");
+                }
+              }}
+              className="text-green-600 hover:text-green-800"
+            >
+              Mark Funded
+            </button>
+          )}
+        </div>
       ),
     },
   ];

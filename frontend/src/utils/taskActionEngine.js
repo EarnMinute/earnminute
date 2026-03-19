@@ -41,8 +41,8 @@ export function getTaskActions(task, role) {
 
     if (status === "revision_requested") {
       actions.push({
-        label: "Resubmit Work",
-        action: () => submitTask(task._id),
+        label: "Resume Work",
+        action: () => startTask(task._id),
       });
     }
 

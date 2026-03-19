@@ -1,4 +1,5 @@
 const Task = require("../models/Task");
+const Escrow = require("../models/Escrow");
 
 /* ===============================
    CREATE TASK
@@ -62,25 +63,61 @@ const getTaskById = async (taskId) => {
 /* ===============================
    GET EMPLOYER TASKS
 ================================ */
+
 const getEmployerTasks = async (employerId) => {
-  return await Task.find({
+  const tasks = await Task.find({
     employer: employerId,
     isDeleted: false,
   })
     .populate("assignedFreelancer", "name rating")
     .sort({ createdAt: -1 });
+
+  const taskIds = tasks.map((t) => t._id);
+
+  const escrows = await Escrow.find({
+    task: { $in: taskIds },
+  });
+
+  const escrowMap = {};
+  escrows.forEach((e) => {
+    escrowMap[e.task.toString()] = e;
+  });
+
+  return tasks.map((task) => {
+    const escrow = escrowMap[task._id.toString()];
+
+    return {
+      ...task.toObject(),
+      escrowStatus: escrow?.status || "none",
+    };
+  });
 };
 
 /* ===============================
    GET ALL TASKS (ADMIN)
 ================================ */
 const getAllTasksAdmin = async () => {
-  return await Task.find({
-    isDeleted: false,
-  })
+  const tasks = await Task.find({ isDeleted: false })
     .populate("employer", "name rating")
     .populate("assignedFreelancer", "name rating")
     .sort({ createdAt: -1 });
+
+  const taskIds = tasks.map((t) => t._id);
+
+  const escrows = await Escrow.find({ task: { $in: taskIds } });
+
+  const escrowMap = {};
+  escrows.forEach((e) => {
+    escrowMap[e.task.toString()] = e;
+  });
+
+  return tasks.map((task) => {
+    const escrow = escrowMap[task._id.toString()];
+    return {
+      ...task.toObject(),
+      escrowStatus: escrow?.status || "none",
+    };
+  });
 };
 
 /* ===============================

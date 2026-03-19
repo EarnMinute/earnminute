@@ -21,11 +21,11 @@ const server = http.createServer(app);
 LOGGING
 ================================ */
 if (process.env.NODE_ENV !== "production") {
-app.use(morgan("dev"));
+  app.use(morgan("dev"));
 }
 
 if (process.env.NODE_ENV === "production") {
-app.use(morgan("combined"));
+  app.use(morgan("combined"));
 }
 
 /* ===============================
@@ -37,27 +37,27 @@ app.set("trust proxy", 1);
 HELMET HARDENED CONFIG
 ================================ */
 app.use(
-helmet({
-contentSecurityPolicy: {
-directives: {
-defaultSrc: ["'self'"],
-scriptSrc: ["'self'"],
-objectSrc: ["'none'"],
-upgradeInsecureRequests: [],
-},
-},
-crossOriginEmbedderPolicy: false,
-})
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        upgradeInsecureRequests: [],
+      },
+    },
+    crossOriginEmbedderPolicy: false,
+  }),
 );
 
 /* ===============================
 GLOBAL RATE LIMIT
 ================================ */
 const globalLimiter = rateLimit({
-windowMs: 15 * 60 * 1000,
-max: process.env.NODE_ENV === "production" ? 200 : 1000,
-standardHeaders: true,
-legacyHeaders: false,
+  windowMs: 15 * 60 * 1000,
+  max: process.env.NODE_ENV === "production" ? 200 : 1000,
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 app.use(globalLimiter);
@@ -66,17 +66,17 @@ app.use(globalLimiter);
 AUTH RATE LIMIT
 ================================ */
 const authLimiter = rateLimit({
-windowMs: 15 * 60 * 1000,
-max: process.env.NODE_ENV === "production" ? 8 : 50,
-message: "Too many authentication attempts. Try later.",
-standardHeaders: true,
-legacyHeaders: false,
+  windowMs: 15 * 60 * 1000,
+  max: process.env.NODE_ENV === "production" ? 8 : 50,
+  message: "Too many authentication attempts. Try later.",
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 const registerLimiter = rateLimit({
-windowMs: 60 * 60 * 1000,
-max: 10,
-message: "Too many accounts created from this IP.",
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  message: "Too many accounts created from this IP.",
 });
 
 /* ===============================
@@ -90,13 +90,12 @@ CORS
 ================================ */
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://earnminute.vercel.app"
+  "https://earnminute.vercel.app",
 ];
 
 app.use(
   cors({
     origin: (origin, callback) => {
-
       if (!origin) return callback(null, true);
 
       if (allowedOrigins.includes(origin)) {
@@ -109,38 +108,38 @@ app.use(
 
       return callback(new Error("CORS not allowed"));
     },
-    credentials: true
-  })
+    credentials: true,
+  }),
 );
 
 /* ===============================
 SOCKET.IO SETUP
 ================================ */
 const io = new Server(server, {
-cors: {
-origin: allowedOrigins,
-methods: ["GET", "POST"],
-credentials: true,
-},
+  cors: {
+    origin: allowedOrigins,
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
 });
 
 app.set("io", io);
 
 io.on("connection", (socket) => {
-console.log("Socket connected:", socket.id);
+  console.log("Socket connected:", socket.id);
 
-socket.on("chat:join", (conversationId) => {
-if (!conversationId) return;
-socket.join(conversationId);
-});
+  socket.on("chat:join", (conversationId) => {
+    if (!conversationId) return;
+    socket.join(conversationId);
+  });
 
-socket.on("chat:leave", (conversationId) => {
-socket.leave(conversationId);
-});
+  socket.on("chat:leave", (conversationId) => {
+    socket.leave(conversationId);
+  });
 
-socket.on("disconnect", () => {
-console.log("Socket disconnected:", socket.id);
-});
+  socket.on("disconnect", () => {
+    console.log("Socket disconnected:", socket.id);
+  });
 });
 
 /* ===============================
@@ -155,9 +154,10 @@ const notificationRoutes = require("./routes/notificationRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const feedbackRoutes = require("./routes/feedbackRoutes");
 const activityRoutes = require("./routes/activityRoutes");
+const escrowRoutes = require("./routes/escrowRoutes");
 
 app.get("/", (req, res) => {
-res.send("EarnMinute API Secure 🚀");
+  res.send("EarnMinute API Secure 🚀");
 });
 
 app.use("/api/v1/auth/login", authLimiter);
@@ -172,34 +172,35 @@ app.use("/api/v1/notifications", notificationRoutes);
 app.use("/api/v1/chat", chatRoutes);
 app.use("/api/v1/feedback", feedbackRoutes);
 app.use("/api/v1/activities", activityRoutes);
+app.use("/api/v1/escrow", escrowRoutes);
 
 /* ===============================
 CENTRAL ERROR HANDLER
 ================================ */
 app.use((err, req, res, next) => {
-console.error(err);
+  console.error(err);
 
-res.status(err.statusCode || 500).json({
-message:
-process.env.NODE_ENV === "production"
-? "Something went wrong."
-: err.message,
-});
+  res.status(err.statusCode || 500).json({
+    message:
+      process.env.NODE_ENV === "production"
+        ? "Something went wrong."
+        : err.message,
+  });
 });
 
 /* ===============================
 DB CONNECTION
 ================================ */
 mongoose
-.connect(process.env.MONGO_URI)
-.then(() => console.log("MongoDB Connected Securely"))
-.catch((err) => {
-console.error("MongoDB connection error:", err);
-process.exit(1);
-});
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB Connected Securely"))
+  .catch((err) => {
+    console.error("MongoDB connection error:", err);
+    process.exit(1);
+  });
 
 const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, "0.0.0.0", () => {
-console.log(`Server running securely on port ${PORT}`);
+  console.log(`Server running securely on port ${PORT}`);
 });

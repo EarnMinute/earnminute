@@ -6,62 +6,54 @@ const escrowSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Task",
       required: true,
-      index: true
     },
 
     employer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true
+      required: true,
     },
 
     freelancer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true
+      required: true,
     },
 
     amount: {
       type: Number,
-      required: true
+      required: true,
     },
 
     status: {
       type: String,
-      enum: [
-        "pending",
-        "funded",
-        "released",
-        "refunded",
-        "disputed"
-      ],
-      default: "pending"
+      enum: ["pending", "funded", "released", "refunded", "disputed"],
+      default: "pending",
     },
 
     paymentGateway: {
       type: String,
-      default: null
+      default: null,
     },
 
     paymentTransactionId: {
       type: String,
-      default: null
+      default: null,
     },
 
     fundedAt: {
-      type: Date
+      type: Date,
     },
 
     releasedAt: {
-      type: Date
+      type: Date,
     },
 
     refundedAt: {
-      type: Date
-    }
-
+      type: Date,
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 /* ===============================

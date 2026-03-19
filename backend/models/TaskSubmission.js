@@ -6,44 +6,44 @@ const taskSubmissionSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Task",
       required: true,
-      index: true
     },
 
     freelancer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true
+      required: true,
     },
 
     message: {
-      type: String
+      type: String,
     },
 
     links: [
       {
-        type: String
-      }
+        type: String,
+      },
     ],
 
     files: [
       {
-        type: String
-      }
+        type: String,
+      },
     ],
 
     screenshots: [
       {
-        type: String
-      }
-    ]
+        type: String,
+      },
+    ],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 /* ===============================
    INDEXES
 ================================ */
 
+// Get submissions for a task (latest first)
 taskSubmissionSchema.index({ task: 1, createdAt: -1 });
 
 module.exports = mongoose.model("TaskSubmission", taskSubmissionSchema);

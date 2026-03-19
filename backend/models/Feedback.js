@@ -4,15 +4,8 @@ const feedbackSchema = new mongoose.Schema(
   {
     type: {
       type: String,
-      enum: [
-        "suggestion",
-        "bug",
-        "ui",
-        "performance",
-        "general"
-      ],
+      enum: ["suggestion", "bug", "ui", "performance", "general"],
       default: "general",
-      index: true,
     },
 
     message: {
@@ -38,23 +31,27 @@ const feedbackSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       default: null,
-      index: true,
     },
 
     status: {
       type: String,
       enum: ["new", "reviewed"],
       default: "new",
-      index: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 /* ===============================
    INDEXES
 ================================ */
 
+// Filtering
+feedbackSchema.index({ type: 1 });
+feedbackSchema.index({ user: 1 });
+feedbackSchema.index({ status: 1 });
+
+// Sorting
 feedbackSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model("Feedback", feedbackSchema);

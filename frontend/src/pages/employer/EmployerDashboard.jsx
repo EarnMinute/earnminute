@@ -6,6 +6,8 @@ import { EMPLOYER_DASHBOARD_TABS } from "@/utils/taskStates";
 import { getTaskActions } from "@/utils/taskActionEngine";
 import TaskActionButtons from "@/components/tasks/TaskActionButtons";
 import TaskTimeline from "@/components/tasks/TaskTimeline";
+import TaskCard from "@/components/tasks/TaskCard";
+import EscrowStatus from "@/components/tasks/EscrowStatus";
 
 function EmployerDashboard() {
   const [dashboard, setDashboard] = useState({
@@ -168,70 +170,52 @@ function EmployerDashboard() {
   };
 
   const renderTask = (task) => (
-    <div
+    <TaskCard
       key={task._id}
-      className="bg-white rounded-xl shadow-md mb-6 overflow-hidden"
-    >
-      <div
-        onClick={() => toggleTask(task._id)}
-        className="p-6 flex justify-between items-center cursor-pointer hover:bg-gray-50"
-      >
-        <div>
-          <h3 className="font-semibold">{task.title}</h3>
+      task={task}
+      role="employer"
+      badge={renderBadge(task)}
+      onClick={() => toggleTask(task._id)}
+      isExpanded={activeTab === "open" && expandedTask === task._id}
+      onActionSuccess={(actionLabel) => {
+        fetchDashboard();
 
-          <p className="text-green-600 font-semibold mt-1">
-            ৳ {task.budgetAmount}
-          </p>
-        </div>
+        if (actionLabel === "Complete Task") {
+          setRatingTaskId(task._id);
+        }
+      }}
+      extraContent={applications.map((app) => (
+        <div
+          key={app._id}
+          className="bg-white p-5 rounded-xl shadow-sm flex justify-between items-center"
+        >
+          <div>
+            <p className="font-semibold">{app.freelancer.name}</p>
 
-        {renderBadge(task)}
-      </div>
+            <p className="text-sm text-gray-500">
+              ⭐ {app.freelancer?.rating?.average || 0} (
+              {app.freelancer?.rating?.count || 0} reviews)
+            </p>
+          </div>
 
-      {activeTab === "open" && expandedTask === task._id && (
-        <div className="border-t bg-gray-50 p-6 space-y-4">
-          {applications.map((app) => (
-            <div
-              key={app._id}
-              className="bg-white p-5 rounded-xl shadow-sm flex justify-between items-center"
+          <div className="flex gap-3">
+            <Link
+              to={`/freelancer/profile/${app.freelancer._id}`}
+              className="bg-gray-200 px-4 py-2 rounded"
             >
-              <div>
-                <p className="font-semibold">{app.freelancer.name}</p>
+              View Profile
+            </Link>
 
-                <p className="text-sm text-gray-500">
-                  ⭐ {app.freelancer?.rating?.average || 0} (
-                  {app.freelancer?.rating?.count || 0} reviews)
-                </p>
-              </div>
-
-              <div className="flex gap-3">
-                <Link
-                  to={`/freelancer/profile/${app.freelancer._id}`}
-                  className="bg-gray-200 px-4 py-2 rounded"
-                >
-                  View Profile
-                </Link>
-
-                <button
-                  onClick={() => handleAssign(task._id, app._id)}
-                  className="bg-green-600 text-white px-4 py-2 rounded"
-                >
-                  Assign
-                </button>
-              </div>
-            </div>
-          ))}
+            <button
+              onClick={() => handleAssign(task._id, app._id)}
+              className="bg-green-600 text-white px-4 py-2 rounded"
+            >
+              Assign
+            </button>
+          </div>
         </div>
-      )}
-
-      <div className="border-t p-6">
-        <TaskActionButtons
-          task={task}
-          userRole="employer"
-          onActionSuccess={fetchDashboard}
-        />
-      </div>
-      <TaskTimeline taskId={task._id} />
-    </div>
+      ))}
+    />
   );
 
   return (

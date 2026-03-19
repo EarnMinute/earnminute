@@ -165,13 +165,15 @@ const submitTask = async (taskId, freelancerId, submissionData) => {
   const freelancer = await userRepository.findById(freelancerId);
 
   if (freelancer) {
-    await activityService.logActivity({
-      type: "task_submitted",
-      userId: freelancer._id,
-      userName: freelancer.name,
-      taskId: task._id,
-      taskTitle: task.title,
-    });
+    try {
+      await activityService.logActivity({
+        type: "task_submitted",
+        userId: freelancer._id,
+        userName: freelancer.name,
+        taskId: task._id,
+        taskTitle: task.title,
+      });
+    } catch (err) {}
   }
 
   await taskTimelineService.logEvent({
@@ -482,11 +484,37 @@ const rateFreelancer = async (taskId, employerId, rating, review) => {
     throw new Error("Task must be completed before rating");
   }
 
+  if (task.isRated) {
+    throw new Error("Task already rated");
+  }
+
+  const freelancer = await userRepository.findById(task.assignedFreelancer);
+
+  if (!freelancer) {
+    throw new Error("Freelancer not found");
+  }
+
+  /* ===============================
+     UPDATE FREELANCER RATING
+  ================================ */
+
+  freelancer.rating.total += rating;
+  freelancer.rating.count += 1;
+  freelancer.rating.average = freelancer.rating.total / freelancer.rating.count;
+
+  await userRepository.saveUser(freelancer);
+
+  /* ===============================
+     UPDATE TASK
+  ================================ */
+
   task.isRated = true;
   task.rating = rating;
   task.review = review;
 
-  return await taskRepository.saveTask(task);
+  await taskRepository.saveTask(task);
+
+  return task;
 };
 
 /* ===============================

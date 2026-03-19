@@ -5,8 +5,7 @@ const analyticsSchema = new mongoose.Schema(
     date: {
       type: String,
       required: true,
-      unique: true,
-      index: true,
+      unique: true, // already indexed internally
     },
 
     visits: {
@@ -24,7 +23,7 @@ const analyticsSchema = new mongoose.Schema(
       default: 0,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 module.exports = mongoose.model("Analytics", analyticsSchema);

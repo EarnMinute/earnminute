@@ -2,6 +2,7 @@ const Application = require("../models/Application");
 const Task = require("../models/Task");
 const User = require("../models/User");
 const applicationService = require("../services/applicationService");
+const Escrow = require("../models/Escrow");
 
 /* ===============================
    APPLY TO TASK
@@ -83,6 +84,21 @@ exports.getFreelancerDashboard = async (req, res) => {
       })
       .sort({ createdAt: -1 });
 
+    /* ===============================
+   ATTACH ESCROW STATUS
+================================= */
+
+    const taskIds = applications.map((app) => app.task?._id).filter(Boolean);
+
+    const escrows = await Escrow.find({
+      task: { $in: taskIds },
+    });
+
+    const escrowMap = {};
+    escrows.forEach((e) => {
+      escrowMap[e.task.toString()] = e;
+    });
+
     const applied = [];
     const assigned = [];
     const in_progress = [];
@@ -97,6 +113,63 @@ exports.getFreelancerDashboard = async (req, res) => {
     applications.forEach((app) => {
       if (!app.task) return;
 
+      const taskId = app.task._id.toString();
+
+      app.task = {
+        ...app.task.toObject(),
+        escrowStatus: escrowMap[taskId]?.status || "none",
+      };
+
+      const taskStatus = app.task.status;
+
+      /* ===============================
+     TASK STATUS ALWAYS FIRST
+  ================================ */
+
+      if (taskStatus === "assigned") {
+        assigned.push(app);
+        return;
+      }
+
+      if (taskStatus === "in_progress") {
+        in_progress.push(app);
+        return;
+      }
+
+      if (taskStatus === "submitted") {
+        submitted.push(app);
+        return;
+      }
+
+      if (taskStatus === "revision_requested") {
+        revision_requested.push(app);
+        return;
+      }
+
+      if (taskStatus === "approved") {
+        approved.push(app);
+        return;
+      }
+
+      if (taskStatus === "completed") {
+        completed.push(app);
+        return;
+      }
+
+      if (taskStatus === "cancelled") {
+        cancelled.push(app);
+        return;
+      }
+
+      if (taskStatus === "disputed") {
+        disputed.push(app);
+        return;
+      }
+
+      /* ===============================
+     FALLBACK TO APPLICATION STATUS
+  ================================ */
+
       if (app.status === "rejected") {
         rejected.push(app);
         return;
@@ -107,19 +180,8 @@ exports.getFreelancerDashboard = async (req, res) => {
         return;
       }
 
-      if (app.status === "accepted") {
-        const status = app.task.status;
-
-        if (status === "assigned") assigned.push(app);
-        else if (status === "in_progress") in_progress.push(app);
-        else if (status === "submitted") submitted.push(app);
-        else if (status === "revision_requested") revision_requested.push(app);
-        else if (status === "approved") approved.push(app);
-        else if (status === "completed") completed.push(app);
-        else if (status === "cancelled") cancelled.push(app);
-        else if (status === "disputed") disputed.push(app);
-        else assigned.push(app);
-      }
+      /* fallback */
+      applied.push(app);
     });
 
     res.status(200).json({

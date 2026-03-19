@@ -573,7 +573,7 @@ AI assisting development must follow strict rules:
 Controller → Service → Repository → Database
 ```
 
-4. Do not break existing features.
+4. Do not break or leave out existing features.
 
 5. Prefer minimal safe changes.
 

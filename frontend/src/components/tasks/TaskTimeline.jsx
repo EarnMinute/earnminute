@@ -15,6 +15,7 @@ const eventIcons = {
 
 function TaskTimeline({ taskId }) {
   const [events, setEvents] = useState([]);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     fetchTimeline();
@@ -29,33 +30,40 @@ function TaskTimeline({ taskId }) {
     }
   };
 
-  if (!events.length) {
-    return (
-      <div className="text-sm text-gray-500 mt-4">No timeline events yet.</div>
-    );
-  }
-
   return (
-    <div className="mt-6 border-t pt-4 space-y-3">
-      <h4 className="font-semibold text-sm text-gray-700 mb-2">
-        Task Timeline
-      </h4>
+    <div className="mt-4">
+      {/* Toggle Header */}
+      <div
+        onClick={() => setOpen(!open)}
+        className="cursor-pointer border rounded-lg px-4 py-2 text-sm font-medium bg-gray-100 hover:bg-gray-200 transition"
+      >
+        Task Timeline {open ? "▲" : "▼"}
+      </div>
 
-      {events.map((event) => (
-        <div
-          key={event._id}
-          className="flex items-start gap-3 bg-gray-50 rounded-lg p-3"
-        >
-          <span className="text-lg">{eventIcons[event.type] || "📌"}</span>
+      {/* Collapsible Content */}
+      {open && (
+        <div className="mt-3 space-y-3">
+          {!events.length && (
+            <p className="text-sm text-gray-500">No timeline events yet.</p>
+          )}
 
-          <div className="text-sm text-gray-700">
-            <p>{event.message}</p>
-            <p className="text-xs text-gray-400">
-              {new Date(event.createdAt).toLocaleString()}
-            </p>
-          </div>
+          {events.map((event) => (
+            <div
+              key={event._id}
+              className="flex items-start gap-3 bg-white border rounded-lg p-3"
+            >
+              <span className="text-lg">{eventIcons[event.type] || "📌"}</span>
+
+              <div className="text-sm text-gray-700">
+                <p>{event.message}</p>
+                <p className="text-xs text-gray-400">
+                  {new Date(event.createdAt).toLocaleString()}
+                </p>
+              </div>
+            </div>
+          ))}
         </div>
-      ))}
+      )}
     </div>
   );
 }

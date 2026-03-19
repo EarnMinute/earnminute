@@ -13,10 +13,9 @@ const userSchema = new mongoose.Schema(
     email: {
       type: String,
       required: true,
-      unique: true,
+      unique: true, // already indexed
       lowercase: true,
       trim: true,
-      index: true,
     },
 
     password: {
@@ -30,7 +29,6 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["freelancer", "employer", "admin"],
       required: true,
-      index: true,
     },
 
     /* ===============================
@@ -75,12 +73,17 @@ const userSchema = new mongoose.Schema(
       average: { type: Number, default: 0 },
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 /* ===============================
    INDEXES
 ================================ */
+
+// Role-based queries (admin dashboards, filtering users)
+userSchema.index({ role: 1 });
+
+// Recent users
 userSchema.index({ createdAt: -1 });
 
 /* ===============================
