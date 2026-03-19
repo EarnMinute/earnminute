@@ -155,6 +155,7 @@ const chatRoutes = require("./routes/chatRoutes");
 const feedbackRoutes = require("./routes/feedbackRoutes");
 const activityRoutes = require("./routes/activityRoutes");
 const escrowRoutes = require("./routes/escrowRoutes");
+const disputeRoutes = require("./routes/disputeRoutes");
 
 app.get("/", (req, res) => {
   res.send("EarnMinute API Secure 🚀");
@@ -173,6 +174,7 @@ app.use("/api/v1/chat", chatRoutes);
 app.use("/api/v1/feedback", feedbackRoutes);
 app.use("/api/v1/activities", activityRoutes);
 app.use("/api/v1/escrow", escrowRoutes);
+app.use("/api/v1/disputes", disputeRoutes);
 
 /* ===============================
 CENTRAL ERROR HANDLER

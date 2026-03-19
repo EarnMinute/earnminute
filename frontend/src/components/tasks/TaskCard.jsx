@@ -29,6 +29,23 @@ function TaskCard({
             <div className="mt-2 flex items-center gap-2">
               <span className="text-xs text-gray-500">Escrow:</span>
               <EscrowStatus status={task.escrowStatus} />
+              {task.escrowStatus === "pending" && role === "employer" && (
+                <button
+                  onClick={async (e) => {
+                    e.stopPropagation();
+
+                    try {
+                      await API.patch(`/escrow/${task._id}/fund`);
+                      onActionSuccess?.("escrow_funded");
+                    } catch (err) {
+                      console.error("Funding failed", err);
+                    }
+                  }}
+                  className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
+                >
+                  Fund Escrow
+                </button>
+              )}
             </div>
           </div>
 

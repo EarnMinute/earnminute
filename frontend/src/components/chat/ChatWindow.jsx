@@ -10,6 +10,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { Link } from "react-router-dom";
 import { getSocket } from "@/services/socket";
+import { raiseDispute } from "@/api/disputeApi";
 
 export default function ChatWindow({ conversation }) {
   const { user } = useAuth();
@@ -183,7 +184,25 @@ export default function ChatWindow({ conversation }) {
 
           <button
             className="text-xs text-red-500 hover:underline"
-            onClick={() => alert("Dispute system will be implemented later")}
+            onClick={async () => {
+              const reason = prompt("Enter dispute reason:");
+              if (!reason) return;
+
+              const description = prompt("Describe the issue:");
+              if (!description) return;
+
+              try {
+                await raiseDispute({
+                  taskId: conversation.task?._id,
+                  reason,
+                  description,
+                });
+
+                alert("Dispute raised successfully");
+              } catch (err) {
+                alert(err.response?.data?.message || "Failed to raise dispute");
+              }
+            }}
           >
             Report Issue
           </button>

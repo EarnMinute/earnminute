@@ -1,40 +1,38 @@
-# EarnMinute — Project Details
-
-## Project Overview
-
-**EarnMinute** is a full-stack **micro-task freelance marketplace platform** where employers can post small tasks and freelancers can apply, complete work, and receive payment.
-
-The platform focuses on **short tasks that can be completed quickly**, enabling users to earn money by completing small freelance jobs.
-
-Typical tasks may include:
-
-* Data entry
-* Social media tasks
-* Simple design work
-* Writing small content pieces
-* Online research
-* Website testing
-* File conversions
-
-The platform is designed with **Bangladesh-focused payment systems** and will later support:
-
-* bKash
-* Nagad
-* SSLCommerz
-* Internal wallet system
+# EarnMinute — (Post Escrow Integration)
 
 ---
 
-# Core Platform Goals
+# Project Overview
 
-The system is designed to prioritize:
+**EarnMinute** is a full-stack micro-task freelance marketplace where employers post small tasks and freelancers complete them for payment.
 
-* Clean architecture
-* Strict task lifecycle control
-* Secure payments through escrow
-* Clear workflow between employers and freelancers
-* Dispute transparency
-* Scalable backend services
+The platform is designed around:
+
+* Fast task execution
+* Clear lifecycle control
+* Secure escrow-based payments
+* Transparent activity and dispute tracking
+
+Typical task categories:
+
+* Data entry
+* Social media actions
+* Content writing
+* Research tasks
+* Design micro-jobs
+* Website testing
+
+---
+
+# Core System Philosophy
+
+The platform is built on **strict workflow enforcement**:
+
+```
+No action without valid state
+No work without secured payment
+No disputes without traceability
+```
 
 ---
 
@@ -47,17 +45,11 @@ The system is designed to prioritize:
 * MongoDB
 * Mongoose
 
-Architecture pattern:
+Architecture:
 
 ```
 Controller → Service → Repository → Database
 ```
-
-This pattern ensures:
-
-* separation of concerns
-* easier testing
-* maintainable services
 
 ---
 
@@ -69,73 +61,49 @@ This pattern ensures:
 * Context API
 * TailwindCSS
 
-Frontend structure:
-
-```
-src
- ├ api
- ├ components
- ├ context
- ├ hooks
- ├ layouts
- ├ pages
- ├ services
- └ utils
-```
-
 ---
 
 # Platform Roles
 
-The system supports three user roles:
-
-### Employer
-
-Employers can:
+## Employer
 
 * Post tasks
-* View freelancer applications
-* Assign freelancers
+* Review applications
+* Assign freelancer
+* Fund escrow
 * Review submissions
-* Approve work
-* Request revisions
-* Rate freelancers
+* Approve / request revision
+* Complete task
+* Rate freelancer
+* Raise disputes
 
 ---
 
-### Freelancer
-
-Freelancers can:
+## Freelancer
 
 * Browse tasks
 * Apply to tasks
-* Accept assignments
-* Start tasks
-* Submit completed work
+* Start work (only after escrow funded)
+* Submit work
 * Resubmit after revision
+* Raise disputes
 * Receive ratings
 
 ---
 
-### Admin
+## Admin
 
-Admins manage the platform:
-
-* View analytics
-* Manage users
-* Monitor tasks
+* Monitor platform activity
+* Fund escrow (manual fallback)
 * Handle disputes
-* Moderate feedback
+* Moderate users and tasks
+* View analytics
 
 ---
 
 # Core Domain Models
 
 ## User
-
-Represents a platform user.
-
-Important fields:
 
 ```
 name
@@ -146,190 +114,104 @@ bio
 skills
 company
 website
-rating
+rating { total, count, average }
 createdAt
-```
-
-Roles:
-
-```
-employer
-freelancer
-admin
 ```
 
 ---
 
-# Task
-
-Tasks represent work posted by employers.
-
-Important fields:
+## Task
 
 ```
 title
 description
 skills
-budgetType
 budgetAmount
 deadline
 status
 employer
 assignedFreelancer
+applicationsCount
+isDeleted
+isRated
 createdAt
 ```
 
 ---
 
-# Application
-
-Freelancers apply to tasks.
-
-Important fields:
+## Application
 
 ```
 task
 freelancer
-coverLetter
-status
+status (applied / accepted / rejected)
 createdAt
 ```
 
-Application statuses:
-
-```
-applied
-accepted
-rejected
-```
-
-Only **one freelancer can be accepted per task.**
-
 ---
 
-# TaskSubmission
-
-Stores proof of completed work.
-
-Supports:
+## TaskSubmission
 
 ```
+task
+freelancer
 message
 links
+files
 screenshots
-file uploads
+createdAt
 ```
-
-Used when freelancers submit work for employer review.
 
 ---
 
-# Escrow
-
-Escrow holds payment until the employer approves the work.
-
-Escrow lifecycle:
+## Escrow
 
 ```
-created
-funded
-released
-refunded
+task
+employer
+freelancer
+amount
+status (pending / funded / released / refunded / disputed)
+paymentGateway
+paymentTransactionId
+fundedAt
+releasedAt
+refundedAt
 ```
-
-Escrow ensures:
-
-* freelancers get paid
-* employers receive completed work
 
 ---
 
-# TaskTimeline
+## TaskTimeline
 
-The **TaskTimeline system records every lifecycle event**.
-
-Example events:
+Tracks all lifecycle events:
 
 ```
 task_posted
-freelancer_assigned
+task_assigned
 task_started
-submission_created
+task_submitted
 revision_requested
-submission_approved
+task_approved
 task_completed
-dispute_opened
+task_cancelled
+task_disputed
 ```
 
-Timeline is used for:
+Used for:
 
-* dispute investigation
-* audit logging
-* activity tracking
+* audit logs
+* dispute resolution
+* transparency
 
 ---
 
-# Notification System
-
-Users receive notifications for important events.
-
-Examples:
-
-```
-new application received
-task assigned
-submission received
-revision requested
-submission approved
-rating received
-```
-
-Notifications help keep users informed about task progress.
-
----
-
-# Activity System
-
-Tracks public activity across the platform.
-
-Examples:
-
-```
-task posted
-freelancer applied
-task completed
-user joined
-```
-
-Displayed in live activity feeds.
-
----
-
-# Task Lifecycle (State Machine)
-
-The platform enforces a **strict task lifecycle** to prevent invalid actions.
-
-Task states:
-
-```
-open
-assigned
-in_progress
-submitted
-revision_requested
-approved
-completed
-cancelled
-disputed
-```
-
-Lifecycle flow:
+# Task Lifecycle (STRICT STATE MACHINE)
 
 ```
 open
  ↓
 assigned
- ↓
+ ↓ (escrow must be funded)
 in_progress
  ↓
 submitted
@@ -341,7 +223,9 @@ approved
 completed
 ```
 
-Alternative paths:
+---
+
+## Alternative Flows
 
 ```
 open → cancelled
@@ -349,48 +233,55 @@ assigned → cancelled
 submitted → disputed
 ```
 
-Rules include:
-
-* freelancer must start task before submission
-* employer cannot cancel after work begins
-* submission required before approval
-* escrow must be funded before work begins
-
 ---
 
-# Escrow Workflow
-
-Escrow ensures secure payments.
-
-Workflow:
+# Escrow Workflow (NOW IMPLEMENTED)
 
 ```
 1 Employer posts task
-2 Employer funds escrow
-3 Freelancer starts task
-4 Freelancer submits work
-5 Employer reviews submission
-6 Employer approves work
-7 Escrow releases payment
-8 Task completes
-```
-
-If dispute occurs:
-
-```
-Escrow held until admin resolution
+2 Freelancer assigned
+3 Escrow created (pending)
+4 Employer funds escrow
+5 Freelancer starts task
+6 Freelancer submits work
+7 Employer approves
+8 Escrow released
+9 Task completed
 ```
 
 ---
 
-# Employer Dashboard
+## Key Rule
 
-Employer dashboard organizes tasks by lifecycle state.
+```
+Task cannot start unless escrow.status === "funded"
+```
+
+---
+
+# Frontend Task Action Engine
+
+The UI dynamically determines allowed actions:
+
+Example:
+
+```
+assigned → Start Task (freelancer)
+in_progress → Submit Work
+submitted → Approve / Request Revision
+approved → Complete Task
+```
+
+---
+
+# Dashboards
+
+## Employer Dashboard
 
 Sections:
 
 ```
-Open Tasks
+Open
 Assigned
 In Progress
 Submitted
@@ -401,22 +292,16 @@ Cancelled
 Disputed
 ```
 
-Employer actions include:
+Includes:
 
-```
-assign freelancer
-request revision
-approve submission
-cancel task
-complete task
-raise dispute
-```
+* application management
+* task actions
+* escrow status
+* timeline
 
 ---
 
-# Freelancer Dashboard
-
-Freelancers track work through dashboard sections.
+## Freelancer Dashboard
 
 Sections:
 
@@ -433,165 +318,179 @@ Disputed
 Rejected
 ```
 
-Freelancer actions include:
+Includes:
+
+* task progress tracking
+* action buttons
+* timeline
+
+---
+
+# Escrow UI Integration (NEW)
+
+Each task now includes:
 
 ```
-apply to task
-start task
-submit work
-resubmit work
-raise dispute
+escrowStatus
+```
+
+Displayed in:
+
+* Employer dashboard
+* Freelancer dashboard
+
+---
+
+## Fund Escrow Button
+
+Visible only when:
+
+```
+task.status === "assigned"
+AND
+escrow.status === "pending"
+AND
+user.role === "employer"
 ```
 
 ---
 
 # Security Rules
 
-Platform enforces multiple security rules.
-
-Examples:
-
-```
-API authentication required
-role-based authorization
-duplicate applications prevented
-single escrow per task
-submission allowed only in correct task state
-```
+* Authentication required for all APIs
+* Role-based authorization
+* One escrow per task
+* Duplicate applications prevented
+* Task transitions validated strictly
+* Escrow must be funded before work starts
 
 ---
 
-# Frontend Task Engine
+# Current System Status
 
-The frontend uses a **Task Action Engine** that determines which actions are available based on:
-
-```
-task status
-user role
-```
-
-Example:
-
-```
-assigned → freelancer can start task
-in_progress → freelancer can submit work
-submitted → employer can approve or request revision
-approved → employer can complete task
-```
-
-This ensures the UI always reflects the backend lifecycle.
-
----
-
-# Current Development Stage
-
-### Backend
-
-Completed:
+## Fully Implemented
 
 * Task lifecycle system
-* Applications
-* Submissions
-* Escrow preparation
+* Application system
+* Submission system
+* Escrow system (manual funding)
 * Timeline logging
-* Notifications
+* Notification system
 * Activity tracking
-
----
-
-### Frontend
-
-Completed:
-
 * Employer dashboard
 * Freelancer dashboard
-* Task browsing
-* Authentication system
-* Task lifecycle UI
 * Task action engine
-* Timeline viewer
 
 ---
 
-# Upcoming Features
+# Next Feature: Dispute System (FOCUS)
 
-Next development phases include:
+## Goal
 
-### Payment Integration
-
-```
-bKash
-Nagad
-SSLCommerz
-```
+Create a **trust and conflict resolution system**
 
 ---
 
-### Wallet System
+## Required Components
+
+### 1. Dispute Model
 
 ```
-user wallet
-withdrawals
-platform commission
-transaction history
-```
-
----
-
-### Messaging System
-
-```
-employer ↔ freelancer chat
-task-specific conversations
-file sharing
+task
+raisedBy
+reason
+description
+status (open / resolved)
+resolution
+createdAt
 ```
 
 ---
 
-### Admin Moderation
+### 2. Flow
 
 ```
-dispute resolution
-user management
-task moderation
-payment monitoring
+User raises dispute
+↓
+Task → disputed state
+↓
+Escrow → locked
+↓
+Admin reviews:
+   - timeline
+   - submission
+   - conversation (future)
+↓
+Admin decides:
+   → release to freelancer
+   → refund employer
 ```
 
 ---
 
-# Development Rules
+### 3. Admin Controls
 
-AI assisting development must follow strict rules:
+* View dispute details
+* View full task timeline
+* Resolve dispute
+* Trigger escrow release/refund
 
-1. Always analyze the existing codebase first.
+---
 
-2. Never assume missing information.
+### 4. UI
 
-3. Always maintain architecture:
+* “Raise Dispute” button (already exists)
+* Dispute panel in admin dashboard
+* Dispute status indicator
 
-```
-Controller → Service → Repository → Database
-```
+---
 
-4. Do not break or leave out existing features.
+# Future Roadmap
 
-5. Prefer minimal safe changes.
+## Phase 1 (Core Completion)
 
-6. When returning code:
+* Dispute system ✅ (next)
+* Wallet system
+* Messaging system
 
-* return full file if under 200 lines
-* otherwise give exact insertion instructions
+---
+
+## Phase 2 (Payments)
+
+* bKash
+* Nagad
+* SSLCommerz
+
+---
+
+## Phase 3 (Growth)
+
+* Smart task matching
+* Rating improvements
+* Analytics dashboards
+* Platform commission
+
+---
+
+# Development Rules (STRICT)
+
+1. Never break lifecycle logic
+2. Always validate state transitions
+3. Keep architecture intact
+4. Prefer minimal safe changes
+5. Never bypass escrow rules
+6. Always log timeline events
 
 ---
 
 # Summary
 
-EarnMinute is a **structured freelance micro-task platform** built with:
+EarnMinute is now a **structured micro-task marketplace with:**
 
-* scalable backend architecture
-* strict lifecycle control
-* escrow payment protection
-* modular React frontend
+* strict task lifecycle
+* enforced escrow system
 * role-based dashboards
+* audit-ready timeline system
+* scalable backend architecture
 
-The system is designed to support **high-volume micro-tasks with secure payments and clear workflows.**
+The next step is building a **robust dispute system** to complete the trust layer of the platform.

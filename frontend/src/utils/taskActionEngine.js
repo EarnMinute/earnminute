@@ -17,13 +17,18 @@ Determines which actions are allowed
 
 export function getTaskActions(task, role) {
   const actions = [];
-
   const status = task.status;
+
+  /* ===============================
+     GLOBAL BLOCK (DISPUTED)
+  ================================ */
+  if (status === "disputed") {
+    return []; // No actions allowed
+  }
 
   /* ===============================
      FREELANCER ACTIONS
   ================================ */
-
   if (role === "freelancer") {
     if (status === "assigned") {
       actions.push({
@@ -46,11 +51,8 @@ export function getTaskActions(task, role) {
       });
     }
 
-    if (
-      status === "assigned" ||
-      status === "in_progress" ||
-      status === "submitted"
-    ) {
+    // ✅ FIXED: Only allow dispute in valid lifecycle states
+    if (status === "submitted" || status === "revision_requested") {
       actions.push({
         label: "Raise Dispute",
         action: () => raiseDispute(task._id),
@@ -61,7 +63,6 @@ export function getTaskActions(task, role) {
   /* ===============================
      EMPLOYER ACTIONS
   ================================ */
-
   if (role === "employer") {
     if (status === "submitted") {
       actions.push({
