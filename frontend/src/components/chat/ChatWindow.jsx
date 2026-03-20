@@ -22,7 +22,6 @@ export default function ChatWindow({ conversation }) {
 
   const messagesRef = useRef(null);
   const typingTimeout = useRef(null);
-
   const inputRef = useRef(null);
 
   useEffect(() => {
@@ -35,9 +34,7 @@ export default function ChatWindow({ conversation }) {
     if (!conversation) return;
 
     loadMessages();
-
     markConversationRead(conversation._id);
-
     joinConversation(conversation._id);
 
     const socket = getSocket();
@@ -50,9 +47,7 @@ export default function ChatWindow({ conversation }) {
           ? message.sender._id
           : message.sender;
 
-      if (String(senderId) === String(currentUserId)) {
-        return; // ignore own socket message
-      }
+      if (String(senderId) === String(currentUserId)) return;
 
       setMessages((prev) => [...prev, message]);
     };
@@ -89,14 +84,12 @@ export default function ChatWindow({ conversation }) {
 
   useEffect(() => {
     if (!messagesRef.current) return;
-
     messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
   }, [messages]);
 
   const loadMessages = async () => {
     try {
       const data = await getMessages(conversation._id);
-
       setMessages(data.reverse());
     } catch (err) {
       console.error("Failed to load messages", err);
@@ -115,7 +108,6 @@ export default function ChatWindow({ conversation }) {
     };
 
     setMessages((prev) => [...prev, tempMessage]);
-
     setText("");
 
     try {
@@ -126,7 +118,7 @@ export default function ChatWindow({ conversation }) {
           m._id === tempMessage._id ? { ...msg, status: "sent" } : m,
         ),
       );
-    } catch (err) {
+    } catch {
       setMessages((prev) =>
         prev.map((m) =>
           m._id === tempMessage._id ? { ...m, status: "failed" } : m,
@@ -152,38 +144,38 @@ export default function ChatWindow({ conversation }) {
   if (!conversation) {
     return (
       <div className="flex-1 flex items-center justify-center text-gray-400">
-        Select a conversation to start chatting
+        Select a conversation
       </div>
     );
   }
 
   const isEmployer = conversation.employer?._id === currentUserId;
-
   const otherUser = isEmployer
     ? conversation.freelancer
     : conversation.employer;
 
   return (
-    <div className="flex flex-col flex-1">
-      <div className="p-4 border-b bg-white">
-        <div className="font-semibold text-sm text-gray-900">
+    <div className="flex flex-col flex-1 h-full">
+      {/* HEADER */}
+      <div className="p-3 sm:p-4 border-b bg-white">
+        <div className="font-semibold text-sm truncate">
           {conversation.task?.title || "Task"}
         </div>
 
-        <div className="text-xs text-gray-600 mt-1">
+        <div className="text-xs text-gray-600 mt-1 truncate">
           {isEmployer ? "Freelancer" : "Employer"}: {otherUser?.name}
         </div>
 
-        <div className="flex gap-3 mt-2">
+        <div className="flex flex-wrap gap-3 mt-2">
           <Link
             to={`/task/${conversation.task?._id}`}
-            className="text-xs text-blue-600 hover:underline"
+            className="text-xs text-blue-600"
           >
             View Task
           </Link>
 
           <button
-            className="text-xs text-red-500 hover:underline"
+            className="text-xs text-red-500"
             onClick={async () => {
               const reason = prompt("Enter dispute reason:");
               if (!reason) return;
@@ -200,7 +192,7 @@ export default function ChatWindow({ conversation }) {
 
                 alert("Dispute raised successfully");
               } catch (err) {
-                alert(err.response?.data?.message || "Failed to raise dispute");
+                alert(err.response?.data?.message || "Failed");
               }
             }}
           >
@@ -209,78 +201,41 @@ export default function ChatWindow({ conversation }) {
         </div>
       </div>
 
-      <div ref={messagesRef} className="flex-1 overflow-y-auto p-4 space-y-3">
+      {/* MESSAGES */}
+      <div
+        ref={messagesRef}
+        className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3"
+      >
         {messages.map((msg, index) => {
           const senderId =
             typeof msg.sender === "object"
               ? msg.sender._id?.toString()
               : msg.sender?.toString();
 
-          const prev = messages[index - 1];
-
-          const prevSenderId =
-            prev && typeof prev.sender === "object"
-              ? prev.sender._id
-              : prev?.sender;
-
-          const isGrouped = prevSenderId === senderId;
-
-          const next = messages[index + 1];
-
-          const nextSenderId =
-            next && typeof next.sender === "object"
-              ? next.sender._id
-              : next?.sender;
-
-          const isLastInGroup = nextSenderId !== senderId;
-
           const isMine = String(senderId) === String(currentUserId);
 
           return (
             <div
               key={msg._id}
-              className={`flex ${isMine ? "justify-end" : "justify-start"} ${
-                isGrouped ? "mt-1" : "mt-4"
-              }`}
+              className={`flex ${isMine ? "justify-end" : "justify-start"}`}
             >
-              <div className="flex flex-col max-w-[70%]">
+              <div className="flex flex-col max-w-[85%] sm:max-w-[70%]">
                 <div
-                  className={`px-4 py-2 text-sm ${
+                  className={`px-3 py-2 text-sm break-words ${
                     isMine
                       ? "bg-blue-600 text-white"
                       : "bg-gray-200 text-gray-800"
-                  }
-                    ${
-                      isMine
-                        ? isGrouped
-                          ? "rounded-l-lg rounded-tr-lg"
-                          : "rounded-lg"
-                        : isGrouped
-                          ? "rounded-r-lg rounded-tl-lg"
-                          : "rounded-lg"
-                    }
-                  `}
+                  } rounded-lg`}
                 >
                   {msg.content}
                 </div>
 
-                {isLastInGroup && (
-                  <div className="flex items-center gap-2 text-xs text-gray-400 mt-1">
-                    <span>
-                      {new Date(msg.createdAt).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </span>
-
-                    {msg.status === "sending" && <span>⏳</span>}
-                    {msg.status === "sent" && <span>✓</span>}
-                    {msg.status === "delivered" && <span>✓✓</span>}
-                    {msg.status === "failed" && (
-                      <span className="text-red-500">!</span>
-                    )}
-                  </div>
-                )}
+                <div className="text-xs text-gray-400 mt-1">
+                  {new Date(msg.createdAt).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </div>
               </div>
             </div>
           );
@@ -293,7 +248,8 @@ export default function ChatWindow({ conversation }) {
         )}
       </div>
 
-      <div className="p-3 border-t flex gap-2">
+      {/* INPUT */}
+      <div className="p-2 sm:p-3 border-t flex gap-2 bg-white">
         <input
           ref={inputRef}
           value={text}

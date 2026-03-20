@@ -12,6 +12,8 @@ function Login() {
     password: "",
   });
 
+  const [showPassword, setShowPassword] = useState(false); // ✅ NEW
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -31,15 +33,10 @@ function Login() {
 
       const role = res.data.user.role;
 
-      if (role === "admin") {
-        navigate("/admin/dashboard");
-      } else if (role === "employer") {
-        navigate("/employer/dashboard");
-      } else if (role === "freelancer") {
-        navigate("/freelancer/dashboard");
-      } else {
-        navigate("/");
-      }
+      if (role === "admin") navigate("/admin/dashboard");
+      else if (role === "employer") navigate("/employer/dashboard");
+      else if (role === "freelancer") navigate("/freelancer/dashboard");
+      else navigate("/");
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");
     } finally {
@@ -50,7 +47,6 @@ function Login() {
   return (
     <div className="bg-gray-50 min-h-screen flex items-center justify-center px-6">
       <div className="w-full max-w-md">
-        {/* HEADER */}
         <div className="text-center mb-10">
           <h1>Welcome Back</h1>
           <p className="text-gray-500 mt-2">
@@ -58,7 +54,6 @@ function Login() {
           </p>
         </div>
 
-        {/* FORM CARD */}
         <form
           onSubmit={handleSubmit}
           className="bg-white rounded-xl shadow-md p-8 space-y-5"
@@ -86,21 +81,30 @@ function Login() {
               Password
             </label>
 
-            <input
-              type="password"
-              name="password"
-              placeholder="Enter your password"
-              value={form.password}
-              onChange={handleChange}
-              className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-900 focus:outline-none transition"
-              required
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"} // ✅ TOGGLE
+                name="password"
+                placeholder="Enter your password"
+                value={form.password}
+                onChange={handleChange}
+                className="w-full border border-gray-300 p-3 pr-12 rounded-lg focus:ring-2 focus:ring-blue-900 focus:outline-none transition"
+                required
+              />
+
+              {/* EYE BUTTON */}
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showPassword ? "🙈" : "👁️"}
+              </button>
+            </div>
           </div>
 
-          {/* ERROR */}
           {error && <p className="text-red-500 text-sm">{error}</p>}
 
-          {/* BUTTON */}
           <button
             type="submit"
             disabled={loading}
@@ -110,7 +114,6 @@ function Login() {
           </button>
         </form>
 
-        {/* FOOTER */}
         <p className="text-center text-sm text-gray-500 mt-6">
           Don’t have an account?{" "}
           <span

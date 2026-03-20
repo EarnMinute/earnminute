@@ -2,10 +2,7 @@ import { useEffect, useState } from "react";
 import API from "@/services/api";
 import { Link } from "react-router-dom";
 import { FREELANCER_DASHBOARD_TABS } from "@/utils/taskStates";
-import TaskActionButtons from "@/components/tasks/TaskActionButtons";
-import TaskTimeline from "@/components/tasks/TaskTimeline";
 import TaskCard from "@/components/tasks/TaskCard";
-import EscrowStatus from "@/components/tasks/EscrowStatus";
 
 function FreelancerDashboard() {
   const [dashboard, setDashboard] = useState({
@@ -23,6 +20,7 @@ function FreelancerDashboard() {
 
   const [activeTab, setActiveTab] = useState("applied");
   const [loading, setLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false); // ✅ NEW
 
   useEffect(() => {
     fetchDashboard();
@@ -76,8 +74,44 @@ function FreelancerDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      <div className="w-64 bg-white border-r p-6">
+    <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
+      {/* MOBILE OVERLAY */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-30 z-40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* MOBILE SIDEBAR */}
+      <div
+        className={`fixed top-0 left-0 h-full w-64 bg-white border-r p-4 z-50 transform transition-transform duration-200 md:hidden
+        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
+      >
+        <h2 className="text-lg font-semibold mb-4">Freelancer</h2>
+
+        <div className="flex flex-col gap-2">
+          {menuItems.map((item) => (
+            <button
+              key={item.key}
+              onClick={() => {
+                setActiveTab(item.key);
+                setSidebarOpen(false);
+              }}
+              className={`text-left px-4 py-2 rounded ${
+                activeTab === item.key
+                  ? "bg-blue-900 text-white"
+                  : "hover:bg-gray-100"
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* DESKTOP SIDEBAR */}
+      <div className="hidden md:block w-64 bg-white border-r p-6">
         <h2 className="text-lg font-semibold mb-6">Freelancer</h2>
 
         <div className="space-y-2">
@@ -97,8 +131,17 @@ function FreelancerDashboard() {
         </div>
       </div>
 
-      <div className="flex-1 p-10">
-        <h1 className="text-2xl font-bold mb-6">Freelancer Dashboard</h1>
+      {/* MAIN CONTENT */}
+      <div className="flex-1 p-4 sm:p-6 md:p-10">
+        <div className="flex items-center justify-between mb-6">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="md:hidden bg-gray-200 px-3 py-1 rounded"
+          >
+            ☰
+          </button>
+          <h1 className="text-2xl font-bold">Freelancer Dashboard</h1>
+        </div>
 
         {loading && (
           <p className="text-gray-500 text-sm">Loading dashboard...</p>

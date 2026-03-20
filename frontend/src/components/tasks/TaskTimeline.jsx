@@ -25,22 +25,20 @@ function TaskTimeline({ taskId }) {
     try {
       const res = await API.get(`/tasks/${taskId}/timeline`);
       setEvents(res.data.timeline || []);
-    } catch (err) {
+    } catch {
       console.error("Timeline load error");
     }
   };
 
   return (
     <div className="mt-4">
-      {/* Toggle Header */}
       <div
         onClick={() => setOpen(!open)}
-        className="cursor-pointer border rounded-lg px-4 py-2 text-sm font-medium bg-gray-100 hover:bg-gray-200 transition"
+        className="cursor-pointer border rounded-lg px-4 py-2 text-sm font-medium bg-gray-100 hover:bg-gray-200"
       >
         Task Timeline {open ? "▲" : "▼"}
       </div>
 
-      {/* Collapsible Content */}
       {open && (
         <div className="mt-3 space-y-3">
           {!events.length && (
@@ -50,11 +48,13 @@ function TaskTimeline({ taskId }) {
           {events.map((event) => (
             <div
               key={event._id}
-              className="flex items-start gap-3 bg-white border rounded-lg p-3"
+              className="flex gap-2 sm:gap-3 bg-white border rounded-lg p-3"
             >
-              <span className="text-lg">{eventIcons[event.type] || "📌"}</span>
+              <span className="text-sm sm:text-lg">
+                {eventIcons[event.type] || "📌"}
+              </span>
 
-              <div className="text-sm text-gray-700">
+              <div className="text-sm text-gray-700 break-words">
                 <p>{event.message}</p>
                 <p className="text-xs text-gray-400">
                   {new Date(event.createdAt).toLocaleString()}

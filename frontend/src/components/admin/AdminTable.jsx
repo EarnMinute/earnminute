@@ -8,12 +8,12 @@ function AdminTable({ columns, data, emptyMessage }) {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-6 overflow-x-auto">
-      <table className="w-full text-sm">
+    <div className="bg-white rounded-xl shadow-md p-4 sm:p-6 overflow-x-auto">
+      <table className="min-w-[600px] w-full text-sm">
         <thead>
           <tr className="text-left text-gray-500 border-b">
             {columns.map((col) => (
-              <th key={col.key} className="pb-3">
+              <th key={col.key} className="pb-3 whitespace-nowrap">
                 {col.label}
               </th>
             ))}
@@ -24,7 +24,7 @@ function AdminTable({ columns, data, emptyMessage }) {
           {data.map((row) => (
             <tr key={row._id} className="border-b">
               {columns.map((col) => (
-                <td key={col.key} className="py-3">
+                <td key={col.key} className="py-3 whitespace-nowrap">
                   {col.render ? col.render(row) : row[col.key]}
                 </td>
               ))}

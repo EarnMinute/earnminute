@@ -49,11 +49,11 @@ function LiveActivityFeed() {
   }, []);
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-5 w-full max-w-sm">
+    <div className="bg-white rounded-xl shadow-md p-4 sm:p-5 w-full max-w-sm">
+      {" "}
       <h3 className="font-semibold text-gray-800 mb-4">
         Live Marketplace Activity
       </h3>
-
       <div className="space-y-3">
         {activities.map((item) => {
           const event = eventIcons[item.type] || {

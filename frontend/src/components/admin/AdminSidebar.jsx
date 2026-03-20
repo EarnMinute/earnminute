@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import api from "@/services/api";
 
-function AdminSidebar() {
+function AdminSidebar({ onNavigate }) {
   const location = useLocation();
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -10,9 +10,7 @@ function AdminSidebar() {
     try {
       const res = await api.get("/feedback?status=new");
       setUnreadCount(res.data.feedbacks?.length || 0);
-    } catch (err) {
-      console.error("Failed to load unread feedback count");
-    }
+    } catch {}
   };
 
   useEffect(() => {
@@ -28,7 +26,7 @@ function AdminSidebar() {
   ];
 
   return (
-    <aside className="w-64 bg-white border-r min-h-screen p-6">
+    <aside className="w-64 p-6">
       <h2 className="text-xl font-bold text-blue-900 mb-8">Admin Panel</h2>
 
       <nav className="space-y-2">
@@ -36,7 +34,8 @@ function AdminSidebar() {
           <Link
             key={item.path}
             to={item.path}
-            className={`flex justify-between items-center px-4 py-2 rounded-lg transition ${
+            onClick={onNavigate}
+            className={`flex justify-between items-center px-4 py-2 rounded-lg ${
               location.pathname === item.path
                 ? "bg-blue-100 text-blue-900 font-medium"
                 : "text-gray-600 hover:bg-gray-100"

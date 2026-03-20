@@ -9,7 +9,7 @@ export default function ChatSidebar({
   const currentUserId = user?.user?._id;
 
   return (
-    <div className="w-80 border-r bg-gray-50 overflow-y-auto">
+    <div className="w-full md:w-80 border-r bg-gray-50 overflow-y-auto">
       <div className="p-4 border-b font-semibold text-lg">Messages</div>
 
       {conversations.length === 0 && (

@@ -104,10 +104,10 @@ function TaskDetails() {
   }
 
   return (
-    <div className="bg-gray-50 min-h-screen py-16 px-6">
-      {" "}
-      <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-10">
-        {" "}
+    // MAIN WRAPPER FIX
+
+    <div className="bg-gray-50 min-h-screen py-16 px-4 sm:px-6">
+      <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-10">
         <div className="md:col-span-2 bg-white rounded-xl shadow-md p-8">
           {" "}
           <h1 className="text-3xl font-bold text-blue-900 mb-4">
@@ -130,11 +130,11 @@ function TaskDetails() {
             </div>
           )}
         </div>
-        <div className="bg-white rounded-xl shadow-md p-8 h-fit sticky top-28">
+        // SIDEBAR FIX
+        <div className="bg-white rounded-xl shadow-md p-6 sm:p-8 h-fit md:sticky md:top-28">
           <h2 className="text-lg font-semibold text-blue-900 mb-6">
             Task Summary
           </h2>
-
           <div className="space-y-4 mb-8">
             <div className="flex justify-between text-sm">
               <span className="text-gray-500">Budget</span>
@@ -167,7 +167,6 @@ function TaskDetails() {
               </div>
             )}
           </div>
-
           {user?.user?.role === "freelancer" && (
             <div className="space-y-3">
               <button

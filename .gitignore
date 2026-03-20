@@ -32,4 +32,6 @@ _tmp/
 # Local development / AI analysis files
 exportCodebase.js
 AI_CODEBASE.txt
+AI_CODEBASE_V2.txt
+AI_CODEBASE_V3.txt
 Project_Details.txt

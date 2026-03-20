@@ -77,11 +77,10 @@ function Tasks() {
             Find tasks that match your skills and start earning today.
           </p>
         </div>
-
         {/* SEARCH */}
         <form
           onSubmit={handleSearch}
-          className="bg-white rounded-xl shadow-md p-6 mb-10 grid md:grid-cols-5 gap-4"
+          className="bg-white rounded-xl shadow-md p-4 sm:p-6 mb-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4"
         >
           <input
             type="text"
@@ -122,14 +121,13 @@ function Tasks() {
             Search
           </button>
         </form>
-
         {/* TASK LIST */}
         {tasks.length === 0 ? (
           <div className="bg-white rounded-xl shadow-md p-10 text-center">
             <p className="text-gray-500">No tasks available right now.</p>
           </div>
         ) : (
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8">
             {tasks.map((task) => (
               <div
                 key={task._id}
@@ -172,7 +170,6 @@ function Tasks() {
             ))}
           </div>
         )}
-
         {/* PAGINATION */}
         <div className="flex justify-center items-center gap-6 mt-12">
           <button

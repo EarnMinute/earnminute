@@ -26,6 +26,7 @@ function EmployerDashboard() {
   const [expandedTask, setExpandedTask] = useState(null);
   const [applications, setApplications] = useState([]);
   const [ratingTaskId, setRatingTaskId] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     fetchDashboard();
@@ -219,29 +220,75 @@ function EmployerDashboard() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      <div className="w-64 bg-white border-r p-6">
-        <h2 className="text-lg font-semibold mb-6">Employer</h2>
+    <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
+      <>
+        {/* MOBILE OVERLAY */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-30 z-40 md:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
 
-        <div className="space-y-2">
-          {menuItems.map((item) => (
-            <button
-              key={item.key}
-              onClick={() => setActiveTab(item.key)}
-              className={`block w-full text-left px-4 py-2 rounded ${
-                activeTab === item.key
-                  ? "bg-blue-900 text-white"
-                  : "hover:bg-gray-100"
-              }`}
-            >
-              {item.label}
-            </button>
-          ))}
+        {/* MOBILE SIDEBAR */}
+        <div
+          className={`fixed top-0 left-0 h-full w-64 bg-white border-r p-4 z-50 transform transition-transform duration-200 md:hidden
+  ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
+        >
+          <h2 className="text-lg font-semibold mb-4">Employer</h2>
+
+          <div className="flex flex-col gap-2">
+            {menuItems.map((item) => (
+              <button
+                key={item.key}
+                onClick={() => {
+                  setActiveTab(item.key);
+                  setSidebarOpen(false);
+                }}
+                className={`text-left px-4 py-2 rounded ${
+                  activeTab === item.key
+                    ? "bg-blue-900 text-white"
+                    : "hover:bg-gray-100"
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
 
-      <div className="flex-1 p-10">
-        <h1 className="text-2xl font-bold mb-6">Employer Dashboard</h1>
+        {/* DESKTOP SIDEBAR */}
+        <div className="hidden md:block w-64 bg-white border-r p-6">
+          <h2 className="text-lg font-semibold mb-6">Employer</h2>
+
+          <div className="space-y-2">
+            {menuItems.map((item) => (
+              <button
+                key={item.key}
+                onClick={() => setActiveTab(item.key)}
+                className={`block w-full text-left px-4 py-2 rounded ${
+                  activeTab === item.key
+                    ? "bg-blue-900 text-white"
+                    : "hover:bg-gray-100"
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </>
+
+      <div className="flex-1 p-4 sm:p-6 md:p-10">
+        <div className="flex items-center justify-between mb-6">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="md:hidden bg-gray-200 px-3 py-1 rounded"
+          >
+            ☰
+          </button>
+          <h1 className="text-2xl font-bold">Employer Dashboard</h1>
+        </div>
 
         {dashboard[activeTab].length === 0 && (
           <p className="text-gray-500">No tasks in this section.</p>

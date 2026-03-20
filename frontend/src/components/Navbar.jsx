@@ -12,28 +12,27 @@ function Navbar() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [chatUnread, setChatUnread] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const notificationRef = useRef(null);
 
   const handleLogout = () => {
     logout();
     navigate("/");
+    setMobileOpen(false);
   };
 
   const getDashboardLink = () => {
     if (!user) return "/";
-
     const role = user?.user?.role;
-
     if (role === "admin") return "/admin/dashboard";
     if (role === "employer") return "/employer/dashboard";
     if (role === "freelancer") return "/freelancer/dashboard";
-
     return "/";
   };
+
   const getProfileLink = () => {
     if (!user) return "/";
-
     const role = user?.user?.role;
     const id = user?.user?._id;
 
@@ -42,6 +41,7 @@ function Navbar() {
 
     return getDashboardLink();
   };
+
   const isEmployerPage = location.pathname.startsWith("/employers");
   const isFreelancerPage = location.pathname.startsWith("/freelancers");
 
@@ -49,30 +49,23 @@ function Navbar() {
     try {
       const res = await API.get("/notifications/unread-count");
       setUnreadCount(res.data.unreadCount || 0);
-    } catch (error) {
-      console.error("Unread count fetch error:", error);
-    }
+    } catch {}
   };
+
   const fetchChatUnread = async () => {
     if (!user) return;
 
     try {
       const res = await API.get("/chat/conversations");
-
       const conversations = res?.data?.conversations || [];
 
       let total = 0;
-
       for (const conv of conversations) {
-        if (conv.unreadCount) {
-          total += conv.unreadCount;
-        }
+        if (conv.unreadCount) total += conv.unreadCount;
       }
 
       setChatUnread(total);
-    } catch (err) {
-      console.error("Chat unread fetch error:", err);
-    }
+    } catch {}
   };
 
   useEffect(() => {
@@ -100,65 +93,36 @@ function Navbar() {
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  useEffect(() => {
-    if (location.pathname === "/messages") {
-      fetchChatUnread();
-    }
-  }, [location.pathname]);
 
   return (
     <nav className="bg-white border-b shadow-sm">
-      <div className="max-w-6xl mx-auto px-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="flex justify-between items-center h-16">
-          <Link to="/" className="text-2xl font-bold text-blue-900">
+          <Link to="/" className="text-xl sm:text-2xl font-bold text-blue-900">
             Earn<span className="text-orange-500">Minute</span>
           </Link>
 
-          <div className="hidden md:flex items-center gap-8">
+          {/* DESKTOP */}
+          <div className="hidden md:flex items-center gap-6 lg:gap-8">
             {(isFreelancerPage || !user) && (
-              <Link
-                to="/tasks"
-                className="text-gray-600 hover:text-blue-900 font-medium transition"
-              >
-                Browse Tasks
-              </Link>
+              <Link to="/tasks">Browse Tasks</Link>
             )}
 
             {(isEmployerPage || user?.user?.role === "employer") && (
-              <Link
-                to="/post-task"
-                className="text-gray-600 hover:text-blue-900 font-medium transition"
-              >
-                Post Task
-              </Link>
+              <Link to="/post-task">Post Task</Link>
             )}
 
             {user ? (
               <>
-                <Link
-                  to={getProfileLink()}
-                  className="text-gray-600 hover:text-blue-900 font-medium transition"
-                >
-                  Profile
-                </Link>
+                <Link to={getProfileLink()}>Profile</Link>
+                <Link to={getDashboardLink()}>Dashboard</Link>
 
-                <Link
-                  to={getDashboardLink()}
-                  className="text-gray-600 hover:text-blue-900 font-medium transition"
-                >
-                  Dashboard
-                </Link>
-
-                <Link to="/messages" className="text-xl relative">
+                <Link to="/messages" className="relative">
                   💬
                   {chatUnread > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 rounded-full">
                       {chatUnread}
                     </span>
                   )}
@@ -166,15 +130,12 @@ function Navbar() {
 
                 <div className="relative" ref={notificationRef}>
                   <button
-                    onClick={() => setShowNotifications(!showNotifications)}
-                    className="relative text-xl"
+                    onClick={() => {
+                      setMobileOpen(false); // close drawer
+                      setShowNotifications(true); // open dropdown
+                    }}
                   >
                     🔔
-                    {unreadCount > 0 && (
-                      <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
-                        {unreadCount}
-                      </span>
-                    )}
                   </button>
 
                   {showNotifications && (
@@ -187,39 +148,133 @@ function Navbar() {
                   )}
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <span className="bg-blue-100 text-blue-900 px-3 py-1 rounded-full text-sm font-medium">
-                    {user?.user?.name}
-                  </span>
-
-                  <button
-                    onClick={handleLogout}
-                    className="text-sm text-red-500 hover:text-red-600 transition"
-                  >
-                    Logout
-                  </button>
-                </div>
+                <button onClick={handleLogout}>Logout</button>
               </>
             ) : (
               <>
+                <Link to="/login">Login</Link>
+                <Link to="/register">Get Started</Link>
+              </>
+            )}
+          </div>
+
+          {/* MOBILE BUTTON */}
+          <button
+            onClick={() => setMobileOpen(true)}
+            className="md:hidden text-2xl"
+          >
+            ☰
+          </button>
+        </div>
+      </div>
+
+      {/* OVERLAY */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-30 z-40"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* RIGHT DRAWER */}
+      <div
+        className={`fixed top-0 right-0 h-full w-2/3 max-w-xs bg-white shadow-lg z-50 transform transition-transform duration-300
+        ${mobileOpen ? "translate-x-0" : "translate-x-full"}`}
+      >
+        <div className="p-4 space-y-4 text-right">
+          {/* NAV */}
+          <div>
+            <p className="text-xs text-gray-400 uppercase mb-2">Navigation</p>
+
+            {(isFreelancerPage || !user) && (
+              <Link
+                to="/tasks"
+                onClick={() => setMobileOpen(false)}
+                className="block py-2"
+              >
+                Browse Tasks
+              </Link>
+            )}
+
+            {(isEmployerPage || user?.user?.role === "employer") && (
+              <Link
+                to="/post-task"
+                onClick={() => setMobileOpen(false)}
+                className="block py-2 font-semibold text-blue-600"
+              >
+                Post Task
+              </Link>
+            )}
+
+            {user && (
+              <>
                 <Link
-                  to="/login"
-                  className="text-gray-600 hover:text-blue-900 font-medium transition"
+                  to={getDashboardLink()}
+                  onClick={() => setMobileOpen(false)}
+                  className="block py-2 font-semibold"
                 >
+                  Dashboard
+                </Link>
+
+                <Link
+                  to={getProfileLink()}
+                  onClick={() => setMobileOpen(false)}
+                  className="block py-2"
+                >
+                  Profile
+                </Link>
+              </>
+            )}
+          </div>
+
+          {/* COMMUNICATION */}
+          {user && (
+            <div>
+              <p className="text-xs text-gray-400 uppercase mb-2">
+                Communication
+              </p>
+
+              <Link
+                to="/messages"
+                onClick={() => setMobileOpen(false)}
+                className="block py-2"
+              >
+                Messages ({chatUnread})
+              </Link>
+
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="block w-full py-2"
+              >
+                Notifications ({unreadCount})
+              </button>
+            </div>
+          )}
+
+          {/* AUTH */}
+          <div className="border-t pt-3">
+            {user ? (
+              <button
+                onClick={handleLogout}
+                className="text-red-500 w-full py-2"
+              >
+                Logout
+              </button>
+            ) : (
+              <>
+                <Link to="/login" className="block py-2">
                   Login
                 </Link>
 
                 <Link
                   to="/register"
-                  className="bg-orange-500 text-white px-5 py-2 rounded-lg font-medium hover:bg-orange-600 transition shadow"
+                  className="block py-2 text-blue-600 font-semibold"
                 >
                   Get Started
                 </Link>
               </>
             )}
           </div>
-
-          <div className="md:hidden text-gray-700 text-xl">☰</div>
         </div>
       </div>
     </nav>

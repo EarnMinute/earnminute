@@ -36,7 +36,7 @@ function GuestEmployerPage() {
           </div>
 
           {/* Illustration Placeholder */}
-          <div className="hidden md:flex justify-center">
+          <div className="mt-10 md:mt-0 flex justify-center">
             <LiveActivityFeed />
           </div>
         </div>

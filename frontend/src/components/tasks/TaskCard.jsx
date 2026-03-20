@@ -1,6 +1,7 @@
 import TaskActionButtons from "@/components/tasks/TaskActionButtons";
 import TaskTimeline from "@/components/tasks/TaskTimeline";
 import EscrowStatus from "./EscrowStatus";
+import API from "@/services/api";
 
 function TaskCard({
   task,
@@ -16,56 +17,62 @@ function TaskCard({
       {/* HEADER */}
       <div
         onClick={onClick}
-        className="p-6 flex justify-between items-center cursor-pointer hover:bg-gray-50"
+        className="p-4 sm:p-6 flex flex-col gap-3 cursor-pointer hover:bg-gray-50"
       >
-        <div>
-          <div>
-            <h3 className="font-semibold">{task.title}</h3>
+        {/* TOP ROW */}
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+          <h3 className="font-semibold break-words text-base sm:text-lg">
+            {task.title}
+          </h3>
 
-            <p className="text-green-600 font-semibold mt-1">
-              ৳ {task.budgetAmount}
-            </p>
+          <div className="self-start sm:self-auto">{badge}</div>
+        </div>
 
-            <div className="mt-2 flex items-center gap-2">
-              <span className="text-xs text-gray-500">Escrow:</span>
-              <EscrowStatus status={task.escrowStatus} />
-              {task.escrowStatus === "pending" && role === "employer" && (
-                <button
-                  onClick={async (e) => {
-                    e.stopPropagation();
+        {/* BUDGET */}
+        <p className="text-green-600 font-semibold text-sm sm:text-base">
+          ৳ {task.budgetAmount}
+        </p>
 
-                    try {
-                      await API.patch(`/escrow/${task._id}/fund`);
-                      onActionSuccess?.("escrow_funded");
-                    } catch (err) {
-                      console.error("Funding failed", err);
-                    }
-                  }}
-                  className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
-                >
-                  Fund Escrow
-                </button>
-              )}
-            </div>
-          </div>
+        {/* ESCROW */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-gray-500">Escrow:</span>
+          <EscrowStatus status={task.escrowStatus} />
 
-          {role === "freelancer" && task.employer?.name && (
-            <p className="text-sm text-gray-500 mt-1">
-              Employer: {task.employer.name}
-            </p>
+          {task.escrowStatus === "pending" && role === "employer" && (
+            <button
+              onClick={async (e) => {
+                e.stopPropagation();
+                try {
+                  await API.patch(`/escrow/${task._id}/fund`);
+                  onActionSuccess?.("escrow_funded");
+                } catch (err) {
+                  console.error("Funding failed", err);
+                }
+              }}
+              className="text-xs bg-blue-600 text-white px-2 py-1 rounded"
+            >
+              Fund Escrow
+            </button>
           )}
         </div>
 
-        {badge}
+        {/* EMPLOYER */}
+        {role === "freelancer" && task.employer?.name && (
+          <p className="text-sm text-gray-500">
+            Employer: {task.employer.name}
+          </p>
+        )}
       </div>
 
-      {/* EXPANDABLE CONTENT */}
+      {/* EXPANDABLE */}
       {isExpanded && extraContent && (
-        <div className="border-t bg-gray-50 p-6 space-y-4">{extraContent}</div>
+        <div className="border-t bg-gray-50 p-4 sm:p-6 space-y-4">
+          {extraContent}
+        </div>
       )}
 
       {/* ACTIONS */}
-      <div className="border-t p-6">
+      <div className="border-t p-4 sm:p-6">
         <TaskActionButtons
           task={task}
           userRole={role}
@@ -74,7 +81,7 @@ function TaskCard({
       </div>
 
       {/* TIMELINE */}
-      <div className="px-6 pb-4">
+      <div className="px-4 sm:px-6 pb-4">
         <TaskTimeline taskId={task._id} />
       </div>
     </div>
